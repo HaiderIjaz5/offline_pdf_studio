@@ -6,6 +6,7 @@ import '../utils/file_saver.dart';
 import '../utils/strings.dart';
 import '../mixins/processing_state_mixin.dart';
 import 'success_screen.dart';
+import '../widgets/ad_banner.dart';
 
 class PdfSecurityScreen extends StatefulWidget {
   final PlatformFile file;

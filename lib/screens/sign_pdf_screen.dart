@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 import '../mixins/processing_state_mixin.dart';
 import 'sign_pdf_placement_screen.dart';
+import '../widgets/ad_banner.dart';
 
 class SignPdfScreen extends StatefulWidget {
   final PlatformFile file;
