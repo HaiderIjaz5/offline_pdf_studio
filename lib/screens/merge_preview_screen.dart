@@ -42,7 +42,7 @@ class _MergePreviewScreenState extends State<MergePreviewScreen> with Processing
   }
 
   Future<void> _addMoreFiles() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
+    FilePickerResult? result = await FilePicker.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
       allowedExtensions: ['pdf'],

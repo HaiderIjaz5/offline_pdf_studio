@@ -38,6 +38,7 @@ class _SuccessScreenState extends State<SuccessScreen> {
   void initState() {
     super.initState();
     _handlePostSuccessOperations();
+  }
   Future<void> _handlePostSuccessOperations() async {
     if (!kIsWeb && widget.filePath != 'Web Download') {
       final fileName = p.basename(widget.filePath);
