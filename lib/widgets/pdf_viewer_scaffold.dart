@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'ad_banner.dart';
 
@@ -9,6 +10,7 @@ class PdfViewerScaffold extends StatefulWidget {
   final String? filePath;
   final Uint8List? fileBytes;
   final Widget? bottomActionWidget;
+  final bool openedFromIntent;
 
   const PdfViewerScaffold({
     super.key,
@@ -16,6 +18,7 @@ class PdfViewerScaffold extends StatefulWidget {
     this.filePath,
     this.fileBytes,
     this.bottomActionWidget,
+    this.openedFromIntent = false,
   });
 
   @override
@@ -39,8 +42,18 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+    return PopScope(
+      canPop: !widget.openedFromIntent,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) {
+          return;
+        }
+        if (widget.openedFromIntent) {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: _isSearching
             ? TextField(
@@ -69,6 +82,12 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
         foregroundColor: const Color(0xFF1E1E1E),
         elevation: 0,
         scrolledUnderElevation: 1,
+        leading: widget.openedFromIntent
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => SystemNavigator.pop(),
+              )
+            : null,
         actions: [
           if (_isSearching) ...[
             IconButton(

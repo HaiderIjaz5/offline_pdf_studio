@@ -80,7 +80,10 @@ class _OfflinePdfStudioAppState extends State<OfflinePdfStudioApp> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           navigatorKey.currentState?.push(
             MaterialPageRoute(
-              builder: (_) => PdfViewerScreen(filePath: file.path),
+              builder: (_) => PdfViewerScreen(
+                filePath: file.path,
+                openedFromIntent: true,
+              ),
             ),
           );
         });
