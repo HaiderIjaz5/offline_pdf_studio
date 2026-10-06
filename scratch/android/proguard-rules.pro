@@ -1,1 +1,0 @@
--dontwarn com.gemalto.jp2.**

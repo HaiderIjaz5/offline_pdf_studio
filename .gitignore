@@ -50,3 +50,5 @@ app.*.map.json
 google-services.json
 GoogleService-Info.plist
 upload-keystore.jks
+
+scratch/
