@@ -7,6 +7,8 @@ import '../services/pdf_service.dart';
 import '../utils/strings.dart';
 import '../mixins/processing_state_mixin.dart';
 
+import '../widgets/ad_banner.dart';
+
 class PdfToTextScreen extends StatefulWidget {
   final PlatformFile file;
   const PdfToTextScreen({super.key, required this.file});
@@ -63,12 +65,22 @@ class _PdfToTextScreenState extends State<PdfToTextScreen> with ProcessingStateM
           if (!_isLoading) IconButton(icon: const Icon(Icons.share), onPressed: _share),
         ],
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: SelectableText(_extractedText ?? ''),
-          ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
+            Expanded(
+              child: _isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: SelectableText(_extractedText ?? ''),
+                  ),
+            ),
+            const AdBannerWidget(),
+          ],
+        ),
+      ),
     );
   }
 }

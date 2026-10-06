@@ -198,6 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
             Expanded(
               child: Center(
                 child: ConstrainedBox(
@@ -205,9 +206,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     children: [
-                      const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
-                      const SizedBox(height: 16),
-                      
                       if (_recentFiles.isNotEmpty) ...[
                         Text(AppStrings.recentFiles, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: onSurfaceColor)),
                         const SizedBox(height: 8),

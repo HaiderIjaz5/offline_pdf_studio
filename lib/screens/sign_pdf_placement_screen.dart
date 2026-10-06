@@ -8,6 +8,8 @@ import '../mixins/processing_state_mixin.dart';
 import 'success_screen.dart';
 import 'dart:math' as math;
 
+import '../widgets/ad_banner.dart';
+
 class SignPdfPlacementScreen extends StatefulWidget {
   final PlatformFile file;
   final Uint8List signatureBytes;
@@ -102,130 +104,138 @@ class _SignPdfPlacementScreenState extends State<SignPdfPlacementScreen> with Pr
           ),
         ],
       ),
-      body: _isLoadingPages
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Expanded(
-                  child: PageView.builder(
-                    itemCount: _maxPage,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentPage = index;
-                      });
-                      _loadPage(index);
-                    },
-                    itemBuilder: (context, index) {
-                      if (!_pageImages.containsKey(index)) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      
-                      return LayoutBuilder(
-                        builder: (context, constraints) {
-                          // The aspect ratio of a standard PDF page is usually known, but here we just fit it inside the box.
-                          // We'll use a Stack and measure the image bounds to accurately position the signature.
-                          return Center(
-                            child: Image.memory(
-                              _pageImages[index]!,
-                              fit: BoxFit.contain,
-                              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                                if (frame == null) return child;
-                                
-                                return Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    child,
-                                    Positioned.fill(
-                                      child: LayoutBuilder(
-                                        builder: (context, imgConstraints) {
-                                          final double sigWidth = imgConstraints.maxWidth * _widthFraction;
-                                          final double posX = imgConstraints.maxWidth * _xFraction;
-                                          final double posY = imgConstraints.maxHeight * _yFraction;
-                                          
-                                          return Stack(
-                                            children: [
-                                              Positioned(
-                                                left: posX,
-                                                top: posY,
-                                                child: GestureDetector(
-                                                  onPanUpdate: (details) {
-                                                    setState(() {
-                                                      _xFraction = (_xFraction + details.delta.dx / imgConstraints.maxWidth).clamp(0.0, 1.0);
-                                                      _yFraction = (_yFraction + details.delta.dy / imgConstraints.maxHeight).clamp(0.0, 1.0);
-                                                    });
-                                                  },
-                                                  child: Transform.rotate(
-                                                    angle: _rotationDegrees * math.pi / 180,
-                                                    child: Image.memory(
-                                                      widget.signatureBytes,
-                                                      width: sigWidth,
-                                                      fit: BoxFit.contain,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  color: Colors.white,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.photo_size_select_large, size: 20, color: Colors.grey),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Slider(
-                              value: _widthFraction,
-                              min: 0.05,
-                              max: 1.0,
-                              onChanged: (val) => setState(() => _widthFraction = val),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          const Icon(Icons.rotate_right, size: 20, color: Colors.grey),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Slider(
-                              value: _rotationDegrees,
-                              min: 0,
-                              max: 360,
-                              onChanged: (val) => setState(() => _rotationDegrees = val),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.rotate_90_degrees_cw),
-                            onPressed: () {
+      body: SafeArea(
+        child: Column(
+          children: [
+            const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
+            Expanded(
+              child: _isLoadingPages
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: PageView.builder(
+                            itemCount: _maxPage,
+                            onPageChanged: (index) {
                               setState(() {
-                                _rotationDegrees = (_rotationDegrees + 90) % 360;
+                                _currentPage = index;
                               });
+                              _loadPage(index);
+                            },
+                            itemBuilder: (context, index) {
+                              if (!_pageImages.containsKey(index)) {
+                                return const Center(child: CircularProgressIndicator());
+                              }
+                              
+                              return LayoutBuilder(
+                                builder: (context, constraints) {
+                                  return Center(
+                                    child: Image.memory(
+                                      _pageImages[index]!,
+                                      fit: BoxFit.contain,
+                                      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                                        if (frame == null) return child;
+                                        
+                                        return Stack(
+                                          clipBehavior: Clip.none,
+                                          children: [
+                                            child,
+                                            Positioned.fill(
+                                              child: LayoutBuilder(
+                                                builder: (context, imgConstraints) {
+                                                  final double sigWidth = imgConstraints.maxWidth * _widthFraction;
+                                                  final double posX = imgConstraints.maxWidth * _xFraction;
+                                                  final double posY = imgConstraints.maxHeight * _yFraction;
+                                                  
+                                                  return Stack(
+                                                    children: [
+                                                      Positioned(
+                                                        left: posX,
+                                                        top: posY,
+                                                        child: GestureDetector(
+                                                          onPanUpdate: (details) {
+                                                            setState(() {
+                                                              _xFraction = (_xFraction + details.delta.dx / imgConstraints.maxWidth).clamp(0.0, 1.0);
+                                                              _yFraction = (_yFraction + details.delta.dy / imgConstraints.maxHeight).clamp(0.0, 1.0);
+                                                            });
+                                                          },
+                                                          child: Transform.rotate(
+                                                            angle: _rotationDegrees * math.pi / 180,
+                                                            child: Image.memory(
+                                                              widget.signatureBytes,
+                                                              width: sigWidth,
+                                                              fit: BoxFit.contain,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                  );
+                                },
+                              );
                             },
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          color: Theme.of(context).colorScheme.surface,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.photo_size_select_large, size: 20, color: Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Slider(
+                                      value: _widthFraction,
+                                      min: 0.05,
+                                      max: 1.0,
+                                      onChanged: (val) => setState(() => _widthFraction = val),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  const Icon(Icons.rotate_right, size: 20, color: Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Slider(
+                                      value: _rotationDegrees,
+                                      min: 0,
+                                      max: 360,
+                                      onChanged: (val) => setState(() => _rotationDegrees = val),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.rotate_90_degrees_cw),
+                                    onPressed: () {
+                                      setState(() {
+                                        _rotationDegrees = (_rotationDegrees + 90) % 360;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
             ),
+            const AdBannerWidget(),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -3,8 +3,6 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:pdfx/pdfx.dart' as pdfx;
-import 'package:pdf_combiner/pdf_combiner.dart';
-import 'package:pdf_combiner/models/merge_input.dart';
 import 'package:path_provider/path_provider.dart';
 
 class PdfService {
@@ -13,46 +11,20 @@ class PdfService {
       final int count = kIsWeb ? fileBytes.length : filePaths.length;
       if (count == 0) return null;
 
+      List<List<int>> inputBytesList = [];
       if (kIsWeb) {
-        // Web fallback using Syncfusion
-        final PdfDocument document = PdfDocument();
-        for (int i = 0; i < count; i++) {
-          final PdfDocument loadedDocument = PdfDocument(inputBytes: fileBytes[i]);
-          for (int j = 0; j < loadedDocument.pages.count; j++) {
-            final PdfPage sourcePage = loadedDocument.pages[j];
-            final PdfTemplate template = sourcePage.createTemplate();
-            final PdfSection section = document.sections!.add();
-            section.pageSettings.size = template.size;
-            section.pageSettings.margins.all = 0;
-            section.pages.add().graphics.drawPdfTemplate(template, const Offset(0, 0));
-          }
-          loadedDocument.dispose();
+        inputBytesList = fileBytes.cast<List<int>>();
+      } else {
+        for (String path in filePaths) {
+          inputBytesList.add(File(path).readAsBytesSync());
         }
-        final List<int> bytes = document.saveSync();
-        document.dispose();
-        return Uint8List.fromList(bytes);
       }
 
-      // Native platforms (Android, iOS, Windows, macOS) use pdf_combiner for zero formatting loss
-      final Directory tempDir = await getTemporaryDirectory();
-      final String outputPath = '${tempDir.path}/merged_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final PdfDocument document = PdfDocument.combine(inputBytesList);
+      final List<int> bytes = document.saveSync();
+      document.dispose();
       
-      final List<MergeInput> inputs = filePaths.map((path) => MergeInput.path(path)).toList();
-      
-      await PdfCombiner.mergeMultiplePDFs(
-        inputs: inputs,
-        outputPath: outputPath,
-      );
-      
-      final File mergedFile = File(outputPath);
-      final Uint8List mergedBytes = mergedFile.readAsBytesSync();
-      
-      // Clean up the temporary file
-      try {
-        mergedFile.deleteSync();
-      } catch (_) {}
-      
-      return mergedBytes;
+      return Uint8List.fromList(bytes);
     } catch (e) {
       debugPrint('Error merging PDFs: $e');
       return null;

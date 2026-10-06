@@ -8,6 +8,8 @@ import '../utils/strings.dart';
 import '../mixins/processing_state_mixin.dart';
 import 'success_screen.dart';
 
+import '../widgets/ad_banner.dart';
+
 class OrganizePagesScreen extends StatefulWidget {
   final PlatformFile file;
   const OrganizePagesScreen({super.key, required this.file});
@@ -154,107 +156,117 @@ class _OrganizePagesScreenState extends State<OrganizePagesScreen> with Processi
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(title: const Text('Organize Pages')),
-      body: _isLoading ? const Center(child: CircularProgressIndicator()) 
-        : Column(
+      body: SafeArea(
+        child: Column(
           children: [
+            const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
             Expanded(
-              child: ReorderableGridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 0.7,
-                ),
-                itemCount: _pageOrder.length,
-                onReorder: (oldIndex, newIndex) {
-                  setState(() {
-                    final int item = _pageOrder.removeAt(oldIndex);
-                    _pageOrder.insert(newIndex, item);
-                  });
-                },
-                itemBuilder: (context, index) {
-                  final originalIndex = _pageOrder[index];
-                  final rotation = _rotations[originalIndex] ?? 0;
-                  return Card(
-                    key: ValueKey(originalIndex.toString()),
-                    elevation: 2,
-                    clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        RotatedBox(
-                          quarterTurns: rotation ~/ 90,
-                          child: Image.memory(
-                            _pages[originalIndex],
-                            fit: BoxFit.cover,
-                          ),
+              child: _isLoading ? const Center(child: CircularProgressIndicator()) 
+                : Column(
+                  children: [
+                    Expanded(
+                      child: ReorderableGridView.builder(
+                        padding: const EdgeInsets.all(16),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          childAspectRatio: 0.7,
                         ),
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: GestureDetector(
-                            onTap: () => _deletePage(index),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.black54,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.delete, color: Colors.white, size: 16),
+                        itemCount: _pageOrder.length,
+                        onReorder: (oldIndex, newIndex) {
+                          setState(() {
+                            final int item = _pageOrder.removeAt(oldIndex);
+                            _pageOrder.insert(newIndex, item);
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          final originalIndex = _pageOrder[index];
+                          final rotation = _rotations[originalIndex] ?? 0;
+                          return Card(
+                            key: ValueKey(originalIndex.toString()),
+                            elevation: 2,
+                            clipBehavior: Clip.antiAlias,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                RotatedBox(
+                                  quarterTurns: rotation ~/ 90,
+                                  child: Image.memory(
+                                    _pages[originalIndex],
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 4,
+                                  right: 4,
+                                  child: GestureDetector(
+                                    onTap: () => _deletePage(index),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.delete, color: Colors.white, size: 16),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 4,
+                                  left: 4,
+                                  child: GestureDetector(
+                                    onTap: () => _rotatePage(originalIndex),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.rotate_right, color: Colors.white, size: 16),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    color: Colors.black54,
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    child: Center(
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 4,
-                          left: 4,
-                          child: GestureDetector(
-                            onTap: () => _rotatePage(originalIndex),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.black54,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.rotate_right, color: Colors.white, size: 16),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            color: Colors.black54,
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Center(
-                              child: Text(
-                                '${index + 1}',
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                          );
+                        },
+                      ),
                     ),
-                  );
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  onPressed: isProcessing ? null : _save,
-                  icon: isProcessing ? const CircularProgressIndicator() : const Icon(Icons.save),
-                  label: Text(isProcessing ? AppStrings.processing : 'Save Organized PDF'),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: isProcessing ? null : _save,
+                          icon: isProcessing ? const CircularProgressIndicator() : const Icon(Icons.save),
+                          label: Text(isProcessing ? AppStrings.processing : 'Save Organized PDF'),
+                        ),
+                      ),
+                    )
+                  ],
                 ),
-              ),
-            )
+            ),
+            const AdBannerWidget(),
           ],
         ),
+      ),
     );
   }
 }

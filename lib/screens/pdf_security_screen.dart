@@ -18,6 +18,8 @@ class PdfSecurityScreen extends StatefulWidget {
 class _PdfSecurityScreenState extends State<PdfSecurityScreen> with ProcessingStateMixin {
   final TextEditingController _pass1 = TextEditingController();
   final TextEditingController _pass2 = TextEditingController();
+  bool _obscure1 = true;
+  bool _obscure2 = true;
 
   @override
   void dispose() {
@@ -69,48 +71,66 @@ class _PdfSecurityScreenState extends State<PdfSecurityScreen> with ProcessingSt
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.isProtectMode ? 'Protect PDF' : 'Unlock PDF')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SafeArea(
         child: Column(
           children: [
-            if (widget.isProtectMode)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: Text('Warning: A forgotten password cannot be recovered offline.', style: TextStyle(color: Colors.red)),
-              ),
-            TextField(
-              controller: _pass1,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: widget.isProtectMode ? 'Enter Password' : 'Current Password',
-                border: const OutlineInputBorder(),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceVariant,
-              ),
-            ),
-            if (widget.isProtectMode) ...[
-              const SizedBox(height: 16),
-              TextField(
-                controller: _pass2,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Confirm Password',
-                  border: const OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceVariant,
+            const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    if (widget.isProtectMode)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 16),
+                        child: Text('Warning: A forgotten password cannot be recovered offline.', style: TextStyle(color: Colors.red)),
+                      ),
+                    TextField(
+                      controller: _pass1,
+                      obscureText: _obscure1,
+                      decoration: InputDecoration(
+                        labelText: widget.isProtectMode ? 'Enter Password' : 'Current Password',
+                        border: const OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscure1 ? Icons.visibility : Icons.visibility_off),
+                          onPressed: () => setState(() => _obscure1 = !_obscure1),
+                        ),
+                      ),
+                    ),
+                    if (widget.isProtectMode) ...[
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _pass2,
+                        obscureText: _obscure2,
+                        decoration: InputDecoration(
+                          labelText: 'Confirm Password',
+                          border: const OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                          suffixIcon: IconButton(
+                            icon: Icon(_obscure2 ? Icons.visibility : Icons.visibility_off),
+                            onPressed: () => setState(() => _obscure2 = !_obscure2),
+                          ),
+                        ),
+                      ),
+                    ],
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: isProcessing ? null : _process,
+                        icon: isProcessing ? const CircularProgressIndicator() : const Icon(Icons.security),
+                        label: Text(isProcessing ? AppStrings.processing : (widget.isProtectMode ? 'Protect' : 'Unlock')),
+                      ),
+                    )
+                  ],
                 ),
               ),
-            ],
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: isProcessing ? null : _process,
-                icon: isProcessing ? const CircularProgressIndicator() : const Icon(Icons.security),
-                label: Text(isProcessing ? AppStrings.processing : (widget.isProtectMode ? 'Protect' : 'Unlock')),
-              ),
-            )
+            ),
+            const AdBannerWidget(),
           ],
         ),
       ),
