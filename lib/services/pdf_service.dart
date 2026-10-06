@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:pdfx/pdfx.dart' as pdfx;
 import 'package:pdf_combiner/pdf_combiner.dart';
-import 'package:pdf_combiner/models/merge_input.dart';
 import 'package:path_provider/path_provider.dart';
 
 class PdfService {
@@ -21,14 +20,13 @@ class PdfService {
         final tempDir = await getTemporaryDirectory();
         final outputPath = '${tempDir.path}/merged_${DateTime.now().millisecondsSinceEpoch}.pdf';
         
-        final List<MergeInput> inputs = filePaths.map((path) => MergeInput(inPath: path)).toList();
-        final response = await PdfCombiner.mergeMultiplePDFs(
-          multiplePDFs: inputs, 
-          outPath: outputPath
+        final String? response = await PdfCombiner.mergeMultiplePDFs(
+          inputPaths: filePaths, 
+          outputPath: outputPath
         );
         
-        if (response != null && response.status == "success") {
-          return File(outputPath).readAsBytesSync();
+        if (response != null && response.isNotEmpty) {
+          return File(response).readAsBytesSync();
         }
         return null;
       } else {
