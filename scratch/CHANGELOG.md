@@ -1,0 +1,419 @@
+## 6.2.0
+
+### General
+
+* Refactored `MergeInput` to a Dart 3 `sealed class` hierarchy (`PathMergeInput`, `BytesMergeInput`, `UrlMergeInput`) for improved type safety and pattern matching support, while maintaining full backward compatibility.
+* Removed redundant Dart isolates layer to optimize memory and CPU usage, invoking platform method channels directly (since native implementations already process work asynchronously on background threads).
+* Simplified `ImageCompression` class structure by removing unnecessary internal private subclasses.
+* Corrected `ImageScale` documentation for `toMap()` and clarified its constructor assertions.
+* Added `MergeInput.url` support to dynamically download and merge remote PDFs and images.
+* Implemented automatic URL download caching (`_downloadedUrlBytesCache`) and temporal file cleanup.
+
+* Improved `DocumentUtils.prepareInput` to dynamically detect file formats (PDF, PNG, JPG, HEIC) using magic numbers for byte inputs instead of forcing `.png` extension.
+* Added unit tests to verify proper file extension creation for byte arrays in `prepareInput`.
+
+### Android
+
+* Fixed a crash (`IllegalArgumentException`) when extracting a PDF to a single combined image with original dimensions (0, 0).
+* Aligned image rescaling logic for individual page extraction with iOS (individual pages are now resized if a scale is configured).
+
+### iOS & macOS
+
+* Fixed a critical crash (`EXC_BAD_ACCESS` in `CGPDFAdvancesGetHorizontalAdvance`) when merging multiple PDF files caused by premature deallocation of source `PDFDocument` objects. [#156](https://github.com/vicajilau/pdf_combiner/issues/156)
+* Simplified page creation helper using native `PDFPage(image:)` initialization.
+* Added `autoreleasepool` wrapping to PDF page rendering loops to prevent memory accumulation and potential out-of-memory crashes on large documents.
+
+### macOS
+
+* Fixed a bug where pages were vertically combined in reverse order (from last page to first page).
+
+### Web
+
+* Added script load safety checks before executing JS interop calls, resolving potential race condition crashes on early invocations.
+
+## 6.1.0
+
+### General
+
+* Fixed an issue where some live images were not properly detected as images.
+
+### Android
+
+* Migrate library to build in kotlin.
+* Refactored Kotlin implementation to use `CoroutineScope(Dispatchers.Main)` and execute background tasks safely on `Dispatchers.Default`, preventing blocking of the main UI thread.
+* Fixed a critical bitmap memory leak in the Android rescaling function by properly recycling the original bitmap resources.
+
+### iOS & macOS
+
+* Added missing `FlutterFramework` dependency to `Package.swift` for Swift Package Manager support.
+
+### Windows
+
+* Added `_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS` compile definition to suppress MSVC deprecation errors in standard library coroutine headers.
+
+## 6.0.4
+
+### General
+
+* Updated minimum Dart SDK to `3.0.0` to support latest dependencies.
+
+## 6.0.3
+
+### General
+
+* Fixed documentation link to improve pub.dev scoring.
+
+## 6.0.2
+
+### General
+
+* Updated dependencies.
+
+## 6.0.1
+
+### General
+
+* Fixed static analysis issues.
+
+## 6.0.0
+
+### General
+
+* **BREAKING CHANGE**: All methods now use `MergeInput` instead of `String` for input parameters, allowing both file paths and raw bytes (`Uint8List`).
+* **BREAKING CHANGE**: `generatePDFFromDocuments` parameter changed from `inputPaths: List<String>` to `inputs: List<MergeInput>`.
+* **BREAKING CHANGE**: `mergeMultiplePDFs` parameter changed from `inputPaths: List<String>` to `inputs: List<MergeInput>`.
+* **BREAKING CHANGE**: `createPDFFromMultipleImages` parameter changed from `inputPaths: List<String>` to `inputs: List<MergeInput>`.
+* **BREAKING CHANGE**: `createImageFromPDF` parameter changed from `inputPath: String` to `input: MergeInput`.
+* Added `MergeInput` class with two factory constructors: `MergeInput.path(String)` and `MergeInput.bytes(Uint8List)`.
+* Added support for mixing file paths and bytes in the same operation.
+* Added support for .heic file format.
+
+## 5.0.0
+
+### General
+
+* **BREAKING CHANGE**: Removed custom response models (`GeneratePdfFromDocumentsResponse`, `ImageFromPDFResponse`, `MergeMultiplePDFResponse` and `PdfFromMultipleImageResponse`).
+* **BREAKING CHANGE**: Methods now return `Future<String>` (path) or `Future<List<String>>` (paths) directly.
+* **BREAKING CHANGE**: Removed `PdfCombinerStatus` enum and `PdfCombinerDelegate`.
+* **BREAKING CHANGE**: Error handling now uses standard Dart `try-catch` blocks. The plugin throws `PdfCombinerException` on failure.
+* Simplified documentation examples to use generic `try-catch` blocks.
+* Added a dedicated section for `PdfCombinerException` in README.
+
+## 4.4.2
+
+### Windows
+
+* Fixed an issue that prevented building on the Windows platform. [#110](https://github.com/vicajilau/pdf_combiner/issues/110)
+
+## 4.4.1
+
+### Web
+
+* Fixed an issue where the `web` folder was not being correctly published, preventing the plugin from working on the web platform. [#102](https://github.com/vicajilau/pdf_combiner/issues/102)
+
+### General
+
+* Updated libraries to improve package analysis and scoring on pub.dev.
+* Updated dependencies.
+
+## 4.4.0
+
+### General
+
+* Fixed an issue where temporary PDF files were not cleaned up after `generatePDFFromDocuments` operation, causing unnecessary storage bloat on mobile devices. [#93](https://github.com/vicajilau/pdf_combiner/issues/93)
+* Added ability to customize the temporary folder path where files are generated using `DocumentUtils.setTemporalFolderPath()` on all native platforms (Windows, macOS, Linux, Android, iOS).
+* Improved documentation across the codebase.
+* Updated dependencies.
+
+## 4.3.8
+
+### General
+
+* Prepare app to access it from github_pages
+
+### Web
+
+* Resolve issue when you convert any image into pdf
+
+## 4.3.7
+
+### General
+
+* Updated the process exposing dependencies to increase the coverage of supported versions.
+
+## 4.3.6
+
+### General
+
+* Fixed an issue where JPEG files were not detected. [#82](https://github.com/vicajilau/pdf_combiner/issues/82)
+
+## 4.3.5
+
+### iOS & macOS
+
+* Fixed an issue where a PDF from multiple images were not creating one page for each image. [PR-78](https://github.com/vicajilau/pdf_combiner/pull/78)
+
+## 4.3.4
+
+### General
+
+* Fixed an issue where PDF/A files were not working. [#76](https://github.com/vicajilau/pdf_combiner/issues/76)
+
+## 4.3.3
+
+### Android
+
+* Fixed an issue where R8 errors happens during release builds due to missing classes. [#67](https://github.com/vicajilau/pdf_combiner/issues/67)
+
+## 4.3.2
+
+### Android
+
+* Fixed an issue where multiple PDF files are combined, the resolution of the pages decreases. [#65](https://github.com/vicajilau/pdf_combiner/issues/65)
+
+## 4.3.1
+
+### General
+
+* Fixed an issue where the application was not build due to a problem with file_magic_number. [#58](https://github.com/vicajilau/pdf_combiner/issues/58)
+* Updated dependencies.
+
+## 4.3.0
+
+### General
+
+* Added: `PdfCombinerDelegate` class for handling progress, success, and error callbacks during the PDF combination process.
+
+## 4.2.5
+
+### General
+
+* Downgrade of path to increase Flutter support. [#46](https://github.com/vicajilau/pdf_combiner/issues/46)
+
+## 4.2.4
+
+### General
+
+* Improved Dart support starting from version 3.4. [#46](https://github.com/vicajilau/pdf_combiner/issues/46)
+
+## 4.2.3
+
+### General
+
+* Fixed `createPDFFromImages` and `generatePDFFromDocuments`: Resolved an issue where the application show a message error when generating PDFs from image files related to the width of the image that appears its undefined.[#43](https://github.com/vicajilau/pdf_combiner/issues/43)
+
+## 4.2.2
+
+### General
+
+* Fixed `generatePDFFromDocuments` When selecting the option to create a PDF with two or more images, the process fails, and no PDF is generated. [#40](https://github.com/vicajilau/pdf_combiner/issues/40)
+* Updated error message for invalid `outputPath` to clarify that it must have a `.pdf` format on `generatePDFFromDocuments`, `mergeMultiplePDFs` and `createPDFFromMultipleImages`.
+
+## 4.2.1
+
+### General
+
+* Improved documentation.
+* Added more coverage.
+* Improved UI for example project.
+
+### Web
+
+* `createPDFFromMultipleImages` did not work without passing a configuration. [#37](https://github.com/vicajilau/pdf_combiner/issues/37)
+
+## 4.2.0
+
+### General
+
+* Drag & Drop Capability added on example project.
+* Added `generatePDFFromDocuments` method to create a PDF from a mix of PDFs and images in any order.
+* Improved UI for example project.
+
+## 4.1.1
+
+### Android
+
+* Fixed `createPDFFromMultipleImages` without configuration. [#35](https://github.com/vicajilau/pdf_combiner/issues/35)
+
+## 4.1.0
+
+### General
+
+* Improved documentation.
+
+### Linux
+
+* Improved error management.
+
+### Windows
+
+* Added support with PDFium by Google with C++.
+
+## 4.0.1
+
+### General
+
+* Refactored `pdf_combiner` to use `compute` for native calls (`MethodChannel`), reducing potential UI freezes (UI thread blocking).
+* `isMock` has been added to `PdfCombiner` for testing purposes, when set to true, isolates will not be executed using main Isolate.
+
+## 4.0.0
+
+### General
+
+* Errors are being recovered from native and sent through the message.
+* New optional parameter `config` of type `PdfFromMultipleImageConfig` to the method `createPDFFromMultipleImages`.
+* New optional parameter `config` of type `ImageFromPdfConfig` to the method `createImageFromPDF`.
+* **BREAKING CHANGE:** `maxWidth`, `maxHeight` and `needImageCompressor` has been inserted inside of `config` property on `createPDFFromMultipleImages`method.
+* **BREAKING CHANGE:** `maxWidth`, `maxHeight` and `createOneImage` has been inserted inside of `config` property on `createImageFromPDF`method.
+* **BREAKING CHANGE:** `outputPath` parameter has been renamed by `outputDirPath` in `createImageFromPDF` method.
+* **BREAKING CHANGE:** `createOneImage` is false by default in `createImageFromPDF` method.
+
+### Android
+
+* `Apache PDFBox` has been replaced by native code with `android.graphics`implementation.
+
+## 3.4.0
+
+### Linux
+
+* Added support with PDFium by Google with C++.
+
+## 3.3.0
+
+### Web
+
+* Removed the need for manually importing JavaScript files and modifying `index.html`. [#21](https://github.com/vicajilau/pdf_combiner/issues/21).
+
+## 3.2.0
+
+### General
+
+* Error management improved.
+* File type detection improved with `file_magic_number` dependency. [file_magic_number](https://github.com/vicajilau/file_magic_number)
+* Universal flows improved.
+
+## 3.1.2
+
+### General
+
+* Simplified catching errors.
+* Added 100% coverage tests.
+
+## 3.1.1
+
+### General
+
+* Added Codecov tool.
+* Added coverage on CI and PRs.
+
+### Android
+
+* Fix issue with special characters in the `outputPath` param on `imageFromPDF` method.
+
+## 3.1.0
+
+### General
+
+* Integrated CD.
+
+### iOS
+
+* iOS migration to SPM.
+
+### MacOS
+
+* MacOS migration to SPM.
+
+## 3.0.4
+
+### Web
+
+* Fixed linting issues.
+* WASP improvements.
+
+## 3.0.3
+
+### Web
+
+* Some internal improvements.
+
+## 3.0.2
+
+### Web
+
+* Added WASM support.
+
+## 3.0.1
+
+### General
+
+* Fixed CI badge.
+
+### Web
+
+* js_utils migrated to js_interop.
+
+## 3.0.0
+
+### General
+
+* Tooltips, theme, and more improvements on example project.
+* Improved documentation inside of the code.
+* Some improvements on the readme.
+* Updated dependencies.
+* Added more integration tests.
+* Minimized code size.
+* Minimized code size.
+* Optimized CI/CD process.
+
+### iOS
+
+* Fixed wrong order exporting a pdf to one image [#9](https://github.com/vicajilau/pdf_combiner/issues/9).
+* Refactor creating extensions.
+
+### MacOS
+
+* MacOS support added.
+* Refactor creating extensions.
+
+### Web
+
+* Web support added.
+
+## 2.1.0
+
+* Added support for empty images.
+* Errors are more explicits adding the path.
+* Bugfix when file does not exist. See [#3](https://github.com/vicajilau/pdf_combiner/issues/3) for details.
+* Added more unit testing.
+* Updated Android dependencies.
+
+## 2.0.0
+
+* BREAKING CHANGE: mergeMultiplePDF has been renamed by mergeMultiplePDFs.
+* BREAKING CHANGE: createPDFFromMultipleImage has been renamed by createPDFFromMultipleImages.
+* BREAKING CHANGE: createImageFromPDF has been renamed by createImageFromPDFs.
+* BREAKING CHANGE: `paths` parameter has been renamed by `inputPaths` in mergeMultiplePDFs method.
+* BREAKING CHANGE: `outputDirPath` parameter has been renamed by `outputPath` in mergeMultiplePDFs method.
+* BREAKING CHANGE: `paths` parameter has been renamed by `inputPaths` in mergeMultiplePDFs method.
+* BREAKING CHANGE: `outputDirPath` parameter has been renamed by `outputPath` in createPDFFromMultipleImages method.
+* BREAKING CHANGE: `path` parameter has been renamed by `inputPath` in createPDFFromMultipleImages method.
+* BREAKING CHANGE: `outputDirPath` parameter has been renamed by `outputPath` in createImageFromPDF method.
+* BREAKING CHANGE: response.status is not a String anymore, now it is a PdfCombinerStatus enum value.
+* Added more tests.
+* Improved documentation.
+
+## 1.0.1
+
+* Updated min SDK of Dart to 3.0
+* Updated min SDK of Flutter to 3.0
+
+## 1.0.0
+
+* Initial release of the PDF Combiner package.
+* Allows users to select multiple PDF files.
+* Combines selected PDFs into a single output file.
+* Supports storage permissions on Android for file access.
+* Displays success and error messages using SnackBars.
+* Provides compatibility with both Android and iOS platforms for saving the output file.
+* Completed migration from pdf_merger.
