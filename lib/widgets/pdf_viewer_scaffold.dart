@@ -54,16 +54,16 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: _isSearching
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                style: const TextStyle(color: Colors.black, fontSize: 18),
-                decoration: const InputDecoration(
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
+                decoration: InputDecoration(
                   hintText: 'Search...',
-                  hintStyle: TextStyle(color: Colors.black54),
+                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.54)),
                   border: InputBorder.none,
                 ),
                 onSubmitted: (String value) {
@@ -79,8 +79,8 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
                   letterSpacing: -0.5,
                 ),
               ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: widget.openedFromIntent
@@ -143,24 +143,6 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
               onPressed: (_pageCount > 0 && widget.filePath != null && !kIsWeb) 
                   ? () => Share.shareXFiles([XFile(widget.filePath!)])
                   : null,
-            ),
-            IconButton(
-              icon: const Icon(Icons.chevron_left),
-              onPressed: () => _pdfViewerController.previousPage(),
-            ),
-            if (_pageCount > 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: Center(
-                  child: Text(
-                    '$_currentPage / $_pageCount',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-              ),
-            IconButton(
-              icon: const Icon(Icons.chevron_right),
-              onPressed: () => _pdfViewerController.nextPage(),
             ),
             const SizedBox(width: 8),
           ],

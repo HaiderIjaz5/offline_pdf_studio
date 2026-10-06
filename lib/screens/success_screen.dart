@@ -34,11 +34,17 @@ class SuccessScreen extends StatefulWidget {
 }
 
 class _SuccessScreenState extends State<SuccessScreen> {
+  String? _internalPath;
+  late final Future<void> _postOps;
+  bool _isReady = false;
+
   @override
   void initState() {
     super.initState();
-    _handlePostSuccessOperations();
+    _internalPath = widget.internalPath;
+    _postOps = _handlePostSuccessOperations();
   }
+  
   Future<void> _handlePostSuccessOperations() async {
     if (!kIsWeb && widget.filePath != 'Web Download') {
       final fileName = p.basename(widget.filePath);
@@ -59,9 +65,21 @@ class _SuccessScreenState extends State<SuccessScreen> {
         }
       }
       
+      if (mounted) {
+        setState(() {
+          _internalPath = internalPath;
+        });
+      }
+      
       await SettingsService.addRecentFile(fileName, internalPath ?? widget.filePath, widget.operation);
     }
     
+    if (mounted) {
+      setState(() {
+        _isReady = true;
+      });
+    }
+
     final bool shouldAsk = await SettingsService.incrementAndCheckReview();
     if (shouldAsk) {
       final InAppReview inAppReview = InAppReview.instance;
@@ -71,17 +89,27 @@ class _SuccessScreenState extends State<SuccessScreen> {
     }
   }
 
-    void _share() {
+  Future<void> _share() async {
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sharing not supported on Web.')));
       return;
     }
-    final String sharePath = widget.internalPath ?? widget.filePath;
+    await _postOps;
+    final String sharePath = _internalPath ?? widget.filePath;
     final file = File(sharePath);
     if (file.existsSync()) {
-      Share.shareXFiles([XFile(sharePath)]);
+      String mimeType = '*/*';
+      final lowerPath = sharePath.toLowerCase();
+      if (lowerPath.endsWith('.pdf')) {
+        mimeType = 'application/pdf';
+      } else if (lowerPath.endsWith('.png') || lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg')) {
+        mimeType = 'image/*';
+      } else if (lowerPath.endsWith('.zip')) {
+        mimeType = 'application/zip';
+      }
+      Share.shareXFiles([XFile(sharePath, mimeType: mimeType)]);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File not found for sharing.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File not found for sharing.')));
     }
   }
 
@@ -202,7 +230,7 @@ class _SuccessScreenState extends State<SuccessScreen> {
                                           MaterialPageRoute(
                                             builder: (_) => PdfViewerScreen(
                                               fileBytes: widget.fileBytes,
-                                              filePath: widget.internalPath ?? widget.filePath,
+                                              filePath: _internalPath ?? widget.filePath,
                                             ),
                                           ),
                                         );
@@ -221,13 +249,9 @@ class _SuccessScreenState extends State<SuccessScreen> {
                             Expanded(
                               child: SizedBox(
                                 height: 56,
-                                child: ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                                    foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                                  ),
-                                  onPressed: _share,
-                                  icon: const Icon(Icons.share),
+                                child: FilledButton.icon(
+                                  onPressed: _isReady ? _share : null,
+                                  icon: _isReady ? const Icon(Icons.share) : const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
                                   label: const Text('Share File', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                                 ),
                               ),

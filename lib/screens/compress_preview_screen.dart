@@ -48,9 +48,9 @@ class _CompressPreviewScreenState extends State<CompressPreviewScreen> with Proc
       fileBytes: widget.file.bytes,
       bottomActionWidget: Container(
         padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          boxShadow: const [
             BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))
           ],
         ),

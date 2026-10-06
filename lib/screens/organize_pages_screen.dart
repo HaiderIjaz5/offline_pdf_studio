@@ -151,10 +151,9 @@ class _OrganizePagesScreenState extends State<OrganizePagesScreen> with Processi
     });
   }
 
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(title: const Text('Organize Pages')),
       body: SafeArea(
         child: Column(

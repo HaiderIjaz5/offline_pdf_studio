@@ -98,14 +98,12 @@ class _MergePreviewScreenState extends State<MergePreviewScreen> with Processing
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text(
           'Merge Order',
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20, letterSpacing: -0.5),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E1E1E),
         elevation: 0,
         scrolledUnderElevation: 1,
         actions: [

@@ -47,11 +47,26 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _openRecentFile(String path) {
+  Future<void> _openRecentFile(String path) async {
     if (File(path).existsSync()) {
-      OpenFilex.open(path);
+      String mimeType = '*/*';
+      final lowerPath = path.toLowerCase();
+      if (lowerPath.endsWith('.pdf')) {
+        mimeType = 'application/pdf';
+      } else if (lowerPath.endsWith('.png') || lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg')) {
+        mimeType = 'image/*';
+      } else if (lowerPath.endsWith('.zip')) {
+        mimeType = 'application/zip';
+      }
+
+      final result = await OpenFilex.open(path, type: mimeType);
+      if (result.type != ResultType.done && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.message)));
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File no longer exists.')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File no longer exists.')));
+      }
       _removeRecentFile(path);
     }
   }

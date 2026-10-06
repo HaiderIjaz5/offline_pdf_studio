@@ -16,7 +16,7 @@ To build and run this project, ensure you have the [Flutter SDK](https://docs.fl
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/asadijaz-stack/offline_pdf_studio.git
+   git clone https://github.com/HaiderIjaz5/offline_pdf_studio.git
    cd offline_pdf_studio
    ```
 

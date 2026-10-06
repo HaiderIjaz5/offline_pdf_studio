@@ -115,6 +115,7 @@ class _SignPdfPlacementScreenState extends State<SignPdfPlacementScreen> with Pr
                       children: [
                         Expanded(
                           child: PageView.builder(
+                            scrollDirection: Axis.vertical,
                             itemCount: _maxPage,
                             onPageChanged: (index) {
                               setState(() {
