@@ -206,6 +206,7 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
           const AdBannerWidget(),
         ],
       ),
+      ),
     );
   }
 }
