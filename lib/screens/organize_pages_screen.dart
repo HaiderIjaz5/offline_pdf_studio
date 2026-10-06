@@ -20,26 +20,87 @@ class _OrganizePagesScreenState extends State<OrganizePagesScreen> with Processi
   bool _isLoading = true;
   List<int> _pageOrder = [];
   Map<int, int> _rotations = {};
+  dynamic _workingInput;
   
   @override
   void initState() {
     super.initState();
+    _workingInput = kIsWeb ? widget.file.bytes : widget.file.path;
     _loadPages();
   }
   
-  Future<void> _loadPages() async {
-    dynamic input = kIsWeb ? widget.file.bytes : widget.file.path;
-    final images = await PdfService.renderAllPdfPagesToImages(input);
-    if (images != null && mounted) {
-      setState(() {
-        _pages = images;
-        _pageOrder = List.generate(images.length, (index) => index);
-        _isLoading = false;
-      });
-    } else if (mounted) {
-      showErrorSnackBar(AppStrings.errorOpenPdf);
-      Navigator.pop(context);
+  Future<void> _loadPages([String? password]) async {
+    try {
+      final images = await PdfService.renderAllPdfPagesToImages(_workingInput);
+      if (images != null && mounted) {
+        setState(() {
+          _pages = images;
+          _pageOrder = List.generate(images.length, (index) => index);
+          _isLoading = false;
+        });
+      } else if (mounted) {
+        // We assume it might be password protected.
+        _promptPassword();
+      }
+    } catch (e) {
+      if (mounted) _promptPassword();
     }
+  }
+
+  void _promptPassword() {
+    final TextEditingController passCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Password Protected'),
+        content: TextField(
+          controller: passCtrl,
+          obscureText: true,
+          decoration: InputDecoration(
+            labelText: 'Enter Password',
+            border: const OutlineInputBorder(),
+            filled: true,
+            fillColor: Theme.of(context).colorScheme.surfaceVariant,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Close screen
+            },
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              
+              setState(() => _isLoading = true);
+              final unlockedBytes = await PdfService.unlockPdf(_workingInput, passCtrl.text);
+              if (unlockedBytes != null) {
+                _workingInput = unlockedBytes; // Store unlocked bytes for saving later!
+                final images = await PdfService.renderAllPdfPagesToImages(unlockedBytes);
+                if (images != null && mounted) {
+                  setState(() {
+                    _pages = images;
+                    _pageOrder = List.generate(images.length, (index) => index);
+                    _isLoading = false;
+                  });
+                } else {
+                  showErrorSnackBar(AppStrings.errorOpenPdf);
+                  if (mounted) Navigator.pop(context);
+                }
+              } else {
+                showErrorSnackBar('Incorrect password.');
+                if (mounted) Navigator.pop(context);
+              }
+            },
+            child: const Text('Unlock'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _rotatePage(int originalIndex) {
@@ -60,8 +121,7 @@ class _OrganizePagesScreenState extends State<OrganizePagesScreen> with Processi
       return;
     }
     await runProcessingTask(() async {
-      dynamic input = kIsWeb ? widget.file.bytes : widget.file.path;
-      Uint8List? resultBytes = await PdfService.reorderPages(input, _pageOrder);
+      Uint8List? resultBytes = await PdfService.reorderPages(_workingInput, _pageOrder);
       
       if (resultBytes != null && _rotations.isNotEmpty) {
         Map<int, int> newRotations = {};

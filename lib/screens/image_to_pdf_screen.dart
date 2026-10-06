@@ -142,7 +142,20 @@ class _ImageToPdfScreenState extends State<ImageToPdfScreen> with ProcessingStat
                           ),
                           title: Text(file.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                           subtitle: Text('Image ${index + 1}'),
-                          trailing: const Icon(Icons.drag_handle, color: Colors.grey),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    _images.removeAt(index);
+                                  });
+                                },
+                              ),
+                              const Icon(Icons.drag_handle, color: Colors.grey),
+                            ],
+                          ),
                         ),
                       );
                     },

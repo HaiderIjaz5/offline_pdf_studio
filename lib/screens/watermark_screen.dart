@@ -90,9 +90,11 @@ class _WatermarkScreenState extends State<WatermarkScreen> with ProcessingStateM
           children: [
             TextField(
               controller: _textController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Watermark Text',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceVariant,
               ),
             ),
             const SizedBox(height: 16),
@@ -105,10 +107,12 @@ class _WatermarkScreenState extends State<WatermarkScreen> with ProcessingStateM
               const SizedBox(height: 16),
               TextField(
                 controller: _pagesController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Pages',
                   hintText: 'e.g. 1-3, 5, 7-9',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surfaceVariant,
                 ),
               ),
             ],

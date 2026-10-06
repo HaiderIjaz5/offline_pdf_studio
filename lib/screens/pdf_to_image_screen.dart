@@ -136,9 +136,9 @@ class _PdfToImageScreenState extends State<PdfToImageScreen> with ProcessingStat
       fileBytes: widget.file.bytes,
       bottomActionWidget: Container(
         padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          boxShadow: const [
             BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))
           ],
         ),
@@ -151,11 +151,13 @@ class _PdfToImageScreenState extends State<PdfToImageScreen> with ProcessingStat
                   child: TextField(
                     controller: _pageController,
                     enabled: !_convertAll,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Pages',
                       hintText: 'e.g. 1-3, 5, 7-9',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      border: const OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                   ),
                 ),
@@ -174,7 +176,7 @@ class _PdfToImageScreenState extends State<PdfToImageScreen> with ProcessingStat
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
                       : const Icon(Icons.image),
-                  label: Text(isProcessing ? 'Processing' : (_convertAll ? 'Export All' : 'Export PNG')),
+                  label: Text(isProcessing ? 'Processing' : (_convertAll ? 'Export All' : 'Export')),
                 ),
               ],
             ),

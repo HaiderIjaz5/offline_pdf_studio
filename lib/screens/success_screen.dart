@@ -71,14 +71,15 @@ class _SuccessScreenState extends State<SuccessScreen> {
     }
   }
 
-  void _share() {
+    void _share() {
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sharing not supported on Web.')));
       return;
     }
-    final file = File(widget.filePath);
+    final String sharePath = widget.internalPath ?? widget.filePath;
+    final file = File(sharePath);
     if (file.existsSync()) {
-      Share.shareXFiles([XFile(widget.filePath)]);
+      Share.shareXFiles([XFile(sharePath)]);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File not found for sharing.')));
     }
@@ -99,7 +100,7 @@ class _SuccessScreenState extends State<SuccessScreen> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 600),
-                  child: Padding(
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -140,90 +141,98 @@ class _SuccessScreenState extends State<SuccessScreen> {
                           ),
                         const SizedBox(height: 48),
 
-                        if (widget.fileBytes != null || widget.multiFileBytes != null)
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: FilledButton.icon(
-                              onPressed: () {
-                                if (widget.multiFileBytes != null && widget.multiFileBytes!.isNotEmpty) {
-                                  showDialog(
-                                    context: context,
-                                    builder: (_) => Dialog(
-                                      backgroundColor: Colors.black87,
-                                      child: Stack(
-                                        children: [
-                                          PageView.builder(
-                                            itemCount: widget.multiFileBytes!.length,
-                                            itemBuilder: (context, index) {
-                                              return InteractiveViewer(
-                                                child: Image.memory(widget.multiFileBytes![index]),
-                                              );
-                                            },
-                                          ),
-                                          Positioned(
-                                            top: 10,
-                                            right: 10,
-                                            child: IconButton(
-                                              icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                                              onPressed: () => Navigator.pop(context),
+                        Row(
+                          children: [
+                            if (widget.fileBytes != null || widget.multiFileBytes != null) ...[
+                              Expanded(
+                                child: SizedBox(
+                                  height: 56,
+                                  child: FilledButton.icon(
+                                    onPressed: () {
+                                      if (widget.multiFileBytes != null && widget.multiFileBytes!.isNotEmpty) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (_) => Dialog(
+                                            backgroundColor: Colors.black87,
+                                            child: Stack(
+                                              children: [
+                                                PageView.builder(
+                                                  scrollDirection: Axis.vertical,
+                                                  itemCount: widget.multiFileBytes!.length,
+                                                  itemBuilder: (context, index) {
+                                                    return InteractiveViewer(
+                                                      child: Image.memory(widget.multiFileBytes![index]),
+                                                    );
+                                                  },
+                                                ),
+                                                Positioned(
+                                                  top: 10,
+                                                  right: 10,
+                                                  child: IconButton(
+                                                    icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                                                    onPressed: () => Navigator.pop(context),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                } else if (widget.isImage) {
-                                  showDialog(
-                                    context: context,
-                                    builder: (_) => Dialog(
-                                      backgroundColor: Colors.transparent,
-                                      child: Stack(
-                                        alignment: Alignment.topRight,
-                                        children: [
-                                          InteractiveViewer(
-                                            child: Image.memory(widget.fileBytes!),
+                                        );
+                                      } else if (widget.isImage) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (_) => Dialog(
+                                            backgroundColor: Colors.transparent,
+                                            child: Stack(
+                                              alignment: Alignment.topRight,
+                                              children: [
+                                                InteractiveViewer(
+                                                  child: Image.memory(widget.fileBytes!),
+                                                ),
+                                                IconButton(
+                                                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                                                  onPressed: () => Navigator.pop(context),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                          IconButton(
-                                            icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                                            onPressed: () => Navigator.pop(context),
+                                        );
+                                      } else {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => PdfViewerScreen(
+                                              fileBytes: widget.fileBytes,
+                                              filePath: widget.internalPath ?? widget.filePath,
+                                            ),
                                           ),
-                                        ],
-                                      ),
+                                        );
+                                      }
+                                    },
+                                    icon: const Icon(Icons.preview_rounded),
+                                    label: Text(
+                                      widget.multiFileBytes != null ? 'Preview Images' : 'Preview File',
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                                     ),
-                                  );
-                                } else {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => PdfViewerScreen(
-                                        fileBytes: widget.fileBytes,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                              icon: const Icon(Icons.preview_rounded),
-                              label: Text(
-                                widget.multiFileBytes != null ? 'Preview Images' : 'Preview File',
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                            ],
+                            Expanded(
+                              child: SizedBox(
+                                height: 56,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                                    foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                                  ),
+                                  onPressed: _share,
+                                  icon: const Icon(Icons.share),
+                                  label: const Text('Share File', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                                ),
                               ),
                             ),
-                          ),
-                        const SizedBox(height: 16),
-                        
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.secondary,
-                              foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                            ),
-                            onPressed: _share,
-                            icon: const Icon(Icons.share),
-                            label: const Text('Share File', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                          ),
+                          ],
                         ),
                         const SizedBox(height: 16),
                         

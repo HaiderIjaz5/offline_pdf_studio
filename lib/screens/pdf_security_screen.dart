@@ -84,6 +84,8 @@ class _PdfSecurityScreenState extends State<PdfSecurityScreen> with ProcessingSt
               decoration: InputDecoration(
                 labelText: widget.isProtectMode ? 'Enter Password' : 'Current Password',
                 border: const OutlineInputBorder(),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceVariant,
               ),
             ),
             if (widget.isProtectMode) ...[
@@ -91,9 +93,11 @@ class _PdfSecurityScreenState extends State<PdfSecurityScreen> with ProcessingSt
               TextField(
                 controller: _pass2,
                 obscureText: true,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Confirm Password',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surfaceVariant,
                 ),
               ),
             ],

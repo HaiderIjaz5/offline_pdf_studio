@@ -91,9 +91,9 @@ class _SplitPreviewScreenState extends State<SplitPreviewScreen> with Processing
       fileBytes: widget.file.bytes,
       bottomActionWidget: Container(
         padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          boxShadow: const [
             BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))
           ],
         ),
@@ -102,11 +102,13 @@ class _SplitPreviewScreenState extends State<SplitPreviewScreen> with Processing
             Expanded(
               child: TextField(
                 controller: _rangeController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Pages to Extract',
                   hintText: 'e.g. 1, 3, 5-7',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 ),
               ),
             ),
