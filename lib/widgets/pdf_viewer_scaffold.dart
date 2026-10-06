@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:share_plus/share_plus.dart';
 import 'ad_banner.dart';
 
 class PdfViewerScaffold extends StatefulWidget {
@@ -136,6 +137,12 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
               onPressed: () {
                 _pdfViewerController.zoomLevel = _pdfViewerController.zoomLevel + 0.5;
               },
+            ),
+            IconButton(
+              icon: const Icon(Icons.share),
+              onPressed: (_pageCount > 0 && widget.filePath != null && !kIsWeb) 
+                  ? () => Share.shareXFiles([XFile(widget.filePath!)])
+                  : null,
             ),
             IconButton(
               icon: const Icon(Icons.chevron_left),

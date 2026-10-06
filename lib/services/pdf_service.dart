@@ -224,4 +224,260 @@ class PdfService {
       return null;
     }
   }
+
+  /// Reorders pages in the PDF according to newOrder (list of 0-based indices).
+  static Future<Uint8List?> reorderPages(dynamic fileInput, List<int> newOrder) async {
+    try {
+      PdfDocument document;
+      if (kIsWeb) {
+        document = PdfDocument(inputBytes: fileInput as Uint8List);
+      } else {
+        document = PdfDocument(inputBytes: File(fileInput as String).readAsBytesSync());
+      }
+      
+      final PdfDocument newDocument = PdfDocument();
+      for (int index in newOrder) {
+        if (index >= 0 && index < document.pages.count) {
+          final PdfPage sourcePage = document.pages[index];
+          final PdfTemplate template = sourcePage.createTemplate();
+          final PdfSection section = newDocument.sections!.add();
+          section.pageSettings.size = template.size;
+          section.pageSettings.margins.all = 0;
+          section.pages.add().graphics.drawPdfTemplate(template, const Offset(0, 0));
+        }
+      }
+      
+      final List<int> bytes = newDocument.saveSync();
+      document.dispose();
+      newDocument.dispose();
+      
+      return Uint8List.fromList(bytes);
+    } catch (e) {
+      debugPrint('Error reordering pages: $e');
+      return null;
+    }
+  }
+
+  /// Rotates specific pages in the PDF. rotations maps page index to angle (90, 180, 270).
+  static Future<Uint8List?> rotatePages(dynamic fileInput, Map<int, int> rotations) async {
+    try {
+      PdfDocument document;
+      if (kIsWeb) {
+        document = PdfDocument(inputBytes: fileInput as Uint8List);
+      } else {
+        document = PdfDocument(inputBytes: File(fileInput as String).readAsBytesSync());
+      }
+      
+      for (var entry in rotations.entries) {
+        final int pageIndex = entry.key;
+        final int angle = entry.value;
+        if (pageIndex >= 0 && pageIndex < document.pages.count) {
+          PdfPageRotation rotation = PdfPageRotation.angle0;
+          if (angle == 90) rotation = PdfPageRotation.angle90;
+          else if (angle == 180) rotation = PdfPageRotation.angle180;
+          else if (angle == 270) rotation = PdfPageRotation.angle270;
+          document.pages[pageIndex].rotation = rotation;
+        }
+      }
+      
+      final List<int> bytes = document.saveSync();
+      document.dispose();
+      
+      return Uint8List.fromList(bytes);
+    } catch (e) {
+      debugPrint('Error rotating pages: $e');
+      return null;
+    }
+  }
+
+  /// Adds a watermark text, optionally adds page numbers to the footer.
+  static Future<Uint8List?> addWatermarkAndPageNumbers(dynamic fileInput, {String? watermarkText, bool diagonal = true, bool addPageNumbers = false}) async {
+    try {
+      PdfDocument document;
+      if (kIsWeb) {
+        document = PdfDocument(inputBytes: fileInput as Uint8List);
+      } else {
+        document = PdfDocument(inputBytes: File(fileInput as String).readAsBytesSync());
+      }
+      
+      final PdfFont watermarkFont = PdfStandardFont(PdfFontFamily.helvetica, 60);
+      final PdfFont pageNumberFont = PdfStandardFont(PdfFontFamily.helvetica, 12);
+      final PdfBrush watermarkBrush = PdfSolidBrush(PdfColor(128, 128, 128));
+      final PdfBrush pageNumberBrush = PdfSolidBrush(PdfColor(0, 0, 0));
+
+      for (int i = 0; i < document.pages.count; i++) {
+        final PdfPage page = document.pages[i];
+        final Size pageSize = page.getClientSize();
+
+        if (watermarkText != null && watermarkText.isNotEmpty) {
+          page.graphics.save();
+          page.graphics.setTransparency(0.25);
+          
+          final Size textSize = watermarkFont.measureString(watermarkText);
+          double x = (pageSize.width - textSize.width) / 2;
+          double y = (pageSize.height - textSize.height) / 2;
+
+          if (diagonal) {
+            page.graphics.translateTransform(pageSize.width / 2, pageSize.height / 2);
+            page.graphics.rotateTransform(-45);
+            page.graphics.drawString(watermarkText, watermarkFont, brush: watermarkBrush, bounds: Rect.fromLTWH(-textSize.width / 2, -textSize.height / 2, textSize.width, textSize.height));
+          } else {
+            page.graphics.drawString(watermarkText, watermarkFont, brush: watermarkBrush, bounds: Rect.fromLTWH(x, y, textSize.width, textSize.height));
+          }
+          page.graphics.restore();
+        }
+
+        if (addPageNumbers) {
+          final String text = 'Page ${i + 1}';
+          final Size textSize = pageNumberFont.measureString(text);
+          page.graphics.drawString(text, pageNumberFont, brush: pageNumberBrush, bounds: Rect.fromLTWH((pageSize.width - textSize.width) / 2, pageSize.height - 20, textSize.width, textSize.height));
+        }
+      }
+      
+      final List<int> bytes = document.saveSync();
+      document.dispose();
+      
+      return Uint8List.fromList(bytes);
+    } catch (e) {
+      debugPrint('Error adding watermark/page numbers: $e');
+      return null;
+    }
+  }
+
+  /// Encrypts the PDF with a password using AES 256.
+  static Future<Uint8List?> protectPdf(dynamic fileInput, String password) async {
+    try {
+      PdfDocument document;
+      if (kIsWeb) {
+        document = PdfDocument(inputBytes: fileInput as Uint8List);
+      } else {
+        document = PdfDocument(inputBytes: File(fileInput as String).readAsBytesSync());
+      }
+      
+      PdfSecurity security = document.security;
+      security.keySize = PdfEncryptionKeySize.key256Bit;
+      security.algorithm = PdfEncryptionAlgorithm.aes;
+      security.userPassword = password;
+      security.ownerPassword = password;
+      
+      final List<int> bytes = document.saveSync();
+      document.dispose();
+      
+      return Uint8List.fromList(bytes);
+    } catch (e) {
+      debugPrint('Error protecting PDF: $e');
+      return null;
+    }
+  }
+
+  /// Removes encryption from a PDF by providing the current password.
+  static Future<Uint8List?> unlockPdf(dynamic fileInput, String password) async {
+    try {
+      PdfDocument document;
+      if (kIsWeb) {
+        document = PdfDocument(inputBytes: fileInput as Uint8List, password: password);
+      } else {
+        document = PdfDocument(inputBytes: File(fileInput as String).readAsBytesSync(), password: password);
+      }
+      
+      // To completely remove security, we copy pages to a new document
+      final PdfDocument newDocument = PdfDocument();
+      for (int j = 0; j < document.pages.count; j++) {
+        final PdfPage sourcePage = document.pages[j];
+        final PdfTemplate template = sourcePage.createTemplate();
+        final PdfSection section = newDocument.sections!.add();
+        section.pageSettings.size = template.size;
+        section.pageSettings.margins.all = 0;
+        section.pages.add().graphics.drawPdfTemplate(template, const Offset(0, 0));
+      }
+      
+      final List<int> bytes = newDocument.saveSync();
+      document.dispose();
+      newDocument.dispose();
+      
+      return Uint8List.fromList(bytes);
+    } catch (e) {
+      debugPrint('Error unlocking PDF (wrong password or corrupted): $e');
+      return null;
+    }
+  }
+
+  /// Adds a signature image to a specific page at a preset position.
+  static Future<Uint8List?> addSignature(dynamic fileInput, int pageIndex, Uint8List signatureBytes, {String position = 'bottomRight'}) async {
+    try {
+      PdfDocument document;
+      if (kIsWeb) {
+        document = PdfDocument(inputBytes: fileInput as Uint8List);
+      } else {
+        document = PdfDocument(inputBytes: File(fileInput as String).readAsBytesSync());
+      }
+      
+      if (pageIndex >= 0 && pageIndex < document.pages.count) {
+        final PdfPage page = document.pages[pageIndex];
+        final PdfBitmap image = PdfBitmap(signatureBytes);
+        
+        final Size pageSize = page.getClientSize();
+        // Scale signature proportionally to page size
+        final double width = pageSize.width * 0.25;
+        final double height = (image.height / image.width) * width;
+        
+        double x = 0;
+        double y = 0;
+        final double padding = 20;
+        
+        if (position == 'bottomRight') {
+          x = pageSize.width - width - padding;
+          y = pageSize.height - height - padding;
+        } else if (position == 'bottomLeft') {
+          x = padding;
+          y = pageSize.height - height - padding;
+        } else if (position == 'topRight') {
+          x = pageSize.width - width - padding;
+          y = padding;
+        }
+        
+        page.graphics.drawImage(image, Rect.fromLTWH(x, y, width, height));
+      }
+      
+      final List<int> bytes = document.saveSync();
+      document.dispose();
+      
+      return Uint8List.fromList(bytes);
+    } catch (e) {
+      debugPrint('Error adding signature: $e');
+      return null;
+    }
+  }
+
+  /// Extracts textual content from the entire PDF document.
+  static Future<String?> extractText(dynamic fileInput) async {
+    try {
+      PdfDocument document;
+      if (kIsWeb) {
+        document = PdfDocument(inputBytes: fileInput as Uint8List);
+      } else {
+        document = PdfDocument(inputBytes: File(fileInput as String).readAsBytesSync());
+      }
+      
+      final PdfTextExtractor extractor = PdfTextExtractor(document);
+      final StringBuffer buffer = StringBuffer();
+      
+      for (int i = 0; i < document.pages.count; i++) {
+        buffer.writeln('--- Page ${i + 1} ---');
+        final String text = extractor.extractText(startPageIndex: i, endPageIndex: i);
+        if (text.trim().isEmpty) {
+          buffer.writeln('No text found on page ${i + 1}');
+        } else {
+          buffer.writeln(text);
+        }
+        buffer.writeln();
+      }
+      
+      document.dispose();
+      return buffer.toString();
+    } catch (e) {
+      debugPrint('Error extracting text: $e');
+      return null;
+    }
+  }
 }

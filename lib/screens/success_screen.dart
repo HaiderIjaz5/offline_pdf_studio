@@ -1,14 +1,20 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:in_app_review/in_app_review.dart';
 
 import '../widgets/ad_banner.dart';
+import '../services/settings_service.dart';
 import 'pdf_viewer_screen.dart';
+import 'package:path/path.dart' as p;
 
-class SuccessScreen extends StatelessWidget {
+class SuccessScreen extends StatefulWidget {
   final String filePath;
   final Uint8List? fileBytes;
   final List<Uint8List>? multiFileBytes;
   final bool isImage;
+  final String operation;
 
   const SuccessScreen({
     super.key,
@@ -16,25 +22,54 @@ class SuccessScreen extends StatelessWidget {
     this.fileBytes,
     this.multiFileBytes,
     this.isImage = false,
+    this.operation = 'Processed PDF',
   });
+
+  @override
+  State<SuccessScreen> createState() => _SuccessScreenState();
+}
+
+class _SuccessScreenState extends State<SuccessScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _handlePostSuccessOperations();
+  }
+
+  Future<void> _handlePostSuccessOperations() async {
+    if (!kIsWeb && widget.filePath != 'Web Download') {
+      final fileName = p.basename(widget.filePath);
+      await SettingsService.addRecentFile(fileName, widget.filePath, widget.operation);
+    }
+    
+    final bool shouldAsk = await SettingsService.incrementAndCheckReview();
+    if (shouldAsk) {
+      final InAppReview inAppReview = InAppReview.instance;
+      if (await inAppReview.isAvailable()) {
+        inAppReview.requestReview();
+      }
+    }
+  }
+
+  void _share() {
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sharing not supported on Web.')));
+      return;
+    }
+    final file = File(widget.filePath);
+    if (file.existsSync()) {
+      Share.shareXFiles([XFile(widget.filePath)]);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File not found for sharing.')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // Matching the off-white from HomeScreen
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E1E1E),
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        title: const Text(
-          'Task Complete',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
-            letterSpacing: -0.5,
-          ),
-        ),
+        title: const Text('Task Complete'),
       ),
       body: SafeArea(
         child: Column(
@@ -43,13 +78,12 @@ class SuccessScreen extends StatelessWidget {
             Expanded(
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 600), // Web/Desktop constraint
+                  constraints: const BoxConstraints(maxWidth: 600),
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Success Icon & Decoration
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
@@ -64,46 +98,35 @@ class SuccessScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 32),
-
-                        // Typography Hierarchy
                         Text(
                           'Success! File Saved.',
                           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1E1E1E),
                               ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),
                         
-                        if (!kIsWeb && filePath != 'Web Download')
+                        if (!kIsWeb && widget.filePath != 'Web Download')
                           Text(
-                            (filePath.startsWith('/document/') || filePath.startsWith('content://'))
+                            (widget.filePath.startsWith('/document/') || widget.filePath.startsWith('content://'))
                                 ? 'Your file has been processed locally and saved securely to the location you selected.'
-                                : 'Your file has been processed locally and saved securely to:\n$filePath',
+                                : 'Your file has been processed locally and saved securely to:\n${widget.filePath}',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF757575),
+                                  color: Colors.grey[600],
                                   height: 1.5,
                                 ),
                             textAlign: TextAlign.center,
                           ),
                         const SizedBox(height: 48),
 
-                        // Action Buttons (Material 3 Style)
-                        if (fileBytes != null || multiFileBytes != null)
+                        if (widget.fileBytes != null || widget.multiFileBytes != null)
                           SizedBox(
                             width: double.infinity,
                             height: 56,
                             child: FilledButton.icon(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFFD32F2F), // Crimson Red
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
                               onPressed: () {
-                                if (multiFileBytes != null && multiFileBytes!.isNotEmpty) {
+                                if (widget.multiFileBytes != null && widget.multiFileBytes!.isNotEmpty) {
                                   showDialog(
                                     context: context,
                                     builder: (_) => Dialog(
@@ -111,10 +134,10 @@ class SuccessScreen extends StatelessWidget {
                                       child: Stack(
                                         children: [
                                           PageView.builder(
-                                            itemCount: multiFileBytes!.length,
+                                            itemCount: widget.multiFileBytes!.length,
                                             itemBuilder: (context, index) {
                                               return InteractiveViewer(
-                                                child: Image.memory(multiFileBytes![index]),
+                                                child: Image.memory(widget.multiFileBytes![index]),
                                               );
                                             },
                                           ),
@@ -126,22 +149,11 @@ class SuccessScreen extends StatelessWidget {
                                               onPressed: () => Navigator.pop(context),
                                             ),
                                           ),
-                                          const Positioned(
-                                            bottom: 20,
-                                            left: 0,
-                                            right: 0,
-                                            child: Center(
-                                              child: Text(
-                                                'Swipe to view pages',
-                                                style: TextStyle(color: Colors.white70, fontSize: 16),
-                                              ),
-                                            ),
-                                          ),
                                         ],
                                       ),
                                     ),
                                   );
-                                } else if (isImage) {
+                                } else if (widget.isImage) {
                                   showDialog(
                                     context: context,
                                     builder: (_) => Dialog(
@@ -150,7 +162,7 @@ class SuccessScreen extends StatelessWidget {
                                         alignment: Alignment.topRight,
                                         children: [
                                           InteractiveViewer(
-                                            child: Image.memory(fileBytes!),
+                                            child: Image.memory(widget.fileBytes!),
                                           ),
                                           IconButton(
                                             icon: const Icon(Icons.close, color: Colors.white, size: 30),
@@ -165,7 +177,7 @@ class SuccessScreen extends StatelessWidget {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) => PdfViewerScreen(
-                                        fileBytes: fileBytes,
+                                        fileBytes: widget.fileBytes,
                                       ),
                                     ),
                                   );
@@ -173,27 +185,33 @@ class SuccessScreen extends StatelessWidget {
                               },
                               icon: const Icon(Icons.preview_rounded),
                               label: Text(
-                                multiFileBytes != null ? 'Preview Images' : 'Preview File',
+                                widget.multiFileBytes != null ? 'Preview Images' : 'Preview File',
                                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                               ),
                             ),
                           ),
-                        if (fileBytes != null || multiFileBytes != null)
-                          const SizedBox(height: 16),
+                        const SizedBox(height: 16),
+                        
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).colorScheme.secondary,
+                              foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                            ),
+                            onPressed: _share,
+                            icon: const Icon(Icons.share),
+                            label: const Text('Share File', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         
                         SizedBox(
                           width: double.infinity,
                           height: 56,
                           child: OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF1E1E1E),
-                              side: const BorderSide(color: Color(0xFFE0E0E0), width: 2),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
                             onPressed: () {
-                              // Navigate back to the home screen grid
                               Navigator.of(context).popUntil((route) => route.isFirst);
                             },
                             icon: const Icon(Icons.arrow_back_rounded),
@@ -209,7 +227,6 @@ class SuccessScreen extends StatelessWidget {
                 ),
               ),
             ),
-            // The ad banner sits safely at the bottom during the high-linger success state
             const AdBannerWidget(), 
           ],
         ),

@@ -7,13 +7,21 @@ import 'package:in_app_update/in_app_update.dart';
 
 import 'screens/home_screen.dart';
 import 'screens/pdf_viewer_screen.dart';
+import 'services/settings_service.dart';
 
-void main() {
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   if (!kIsWeb) {
     unawaited(MobileAds.instance.initialize());
   }
+
+  final String savedTheme = await SettingsService.getThemeMode();
+  if (savedTheme == 'light') themeNotifier.value = ThemeMode.light;
+  else if (savedTheme == 'dark') themeNotifier.value = ThemeMode.dark;
+  else themeNotifier.value = ThemeMode.system;
 
   runApp(const OfflinePdfStudioApp());
 }
@@ -55,14 +63,12 @@ class _OfflinePdfStudioAppState extends State<OfflinePdfStudioApp> {
   }
 
   void _initIntentListener() {
-    // For sharing or opening files while the app is in the background
     _intentDataStreamSubscription = ReceiveSharingIntent.instance.getMediaStream().listen((List<SharedMediaFile> value) {
       _handleSharedFiles(value);
     }, onError: (err) {
       debugPrint("getIntentDataStream error: $err");
     });
 
-    // For sharing or opening files when the app is closed
     ReceiveSharingIntent.instance.getInitialMedia().then((List<SharedMediaFile> value) {
       _handleSharedFiles(value);
       ReceiveSharingIntent.instance.reset();
@@ -76,7 +82,6 @@ class _OfflinePdfStudioAppState extends State<OfflinePdfStudioApp> {
       final mime = file.mimeType?.toLowerCase() ?? '';
 
       if (pathLower.endsWith('.pdf') || mime.contains('pdf')) {
-        // Navigate to PdfViewerScreen once the navigator is ready
         WidgetsBinding.instance.addPostFrameCallback((_) {
           navigatorKey.currentState?.push(
             MaterialPageRoute(
@@ -101,19 +106,33 @@ class _OfflinePdfStudioAppState extends State<OfflinePdfStudioApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: 'Offline PDF Studio',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFD32F2F), // Crimson Red
-          primary: const Color(0xFFD32F2F),
-          surface: const Color(0xFFF8F9FA), // Professional Off-White
-        ),
-      ),
-      home: const HomeScreen(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (_, ThemeMode currentMode, __) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          title: 'Offline PDF Studio',
+          debugShowCheckedModeBanner: false,
+          themeMode: currentMode,
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFFD32F2F),
+              primary: const Color(0xFFD32F2F),
+              brightness: Brightness.light,
+            ),
+          ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFFD32F2F),
+              primary: const Color(0xFFD32F2F),
+              brightness: Brightness.dark,
+            ),
+          ),
+          home: const HomeScreen(),
+        );
+      },
     );
   }
 }
