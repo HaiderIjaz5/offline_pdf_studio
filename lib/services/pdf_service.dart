@@ -272,10 +272,10 @@ class PdfService {
         final int pageIndex = entry.key;
         final int angle = entry.value;
         if (pageIndex >= 0 && pageIndex < document.pages.count) {
-          PdfPageRotation rotation = PdfPageRotation.angle0;
-          if (angle == 90) rotation = PdfPageRotation.angle90;
-          else if (angle == 180) rotation = PdfPageRotation.angle180;
-          else if (angle == 270) rotation = PdfPageRotation.angle270;
+          PdfPageRotateAngle rotation = PdfPageRotateAngle.rotateAngle0;
+          if (angle == 90) rotation = PdfPageRotateAngle.rotateAngle90;
+          else if (angle == 180) rotation = PdfPageRotateAngle.rotateAngle180;
+          else if (angle == 270) rotation = PdfPageRotateAngle.rotateAngle270;
           document.pages[pageIndex].rotation = rotation;
         }
       }
@@ -355,8 +355,7 @@ class PdfService {
       }
       
       PdfSecurity security = document.security;
-      security.keySize = PdfEncryptionKeySize.key256Bit;
-      security.algorithm = PdfEncryptionAlgorithm.aes;
+      security.algorithm = PdfEncryptionAlgorithm.aesx256Bit;
       security.userPassword = password;
       security.ownerPassword = password;
       
