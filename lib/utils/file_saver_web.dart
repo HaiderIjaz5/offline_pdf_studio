@@ -24,3 +24,7 @@ Future<String?> saveMultipleFilesImpl(List<List<int>> filesBytes, List<String> f
   final zipData = ZipEncoder().encode(archive);
   return await saveFileImpl(zipData, zipName);
 }
+
+Future<String?> saveAppCopyImpl(List<int> bytes, String fileName) async {
+  return null;
+}

@@ -10,4 +10,8 @@ class FileSaver {
   static Future<String?> saveMultipleFiles(List<List<int>> filesBytes, List<String> fileNames, String zipName) async {
     return saveMultipleFilesImpl(filesBytes, fileNames, zipName);
   }
+
+  static Future<String?> saveAppCopy(List<int> bytes, String fileName) async {
+    return saveAppCopyImpl(bytes, fileName);
+  }
 }

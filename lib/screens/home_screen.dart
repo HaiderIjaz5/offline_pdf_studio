@@ -135,16 +135,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final tools = [
       {'title': 'View PDF', 'subtitle': 'Open and read PDF files', 'icon': Icons.picture_as_pdf, 'badge': null},
       {'title': 'Scan Image', 'subtitle': 'Scan documents with camera', 'icon': Icons.document_scanner_outlined, 'badge': 'Fast'},
-      {'title': 'Merge PDFs', 'subtitle': 'Combine multiple files into one', 'icon': Icons.call_merge_rounded, 'badge': 'Popular'},
+      {'title': 'PDF to Image', 'subtitle': 'Extract pages as JPEG/PNG', 'icon': Icons.image, 'badge': null},
+      {'title': 'Sign PDF', 'subtitle': 'Draw your signature on a page', 'icon': Icons.draw, 'badge': 'New'},
       {'title': 'Split PDF', 'subtitle': 'Extract specific pages easily', 'icon': Icons.call_split_rounded, 'badge': null},
-      {'title': 'Compress PDF', 'subtitle': 'Shrink file size for sharing', 'icon': Icons.compress_rounded, 'badge': 'Fast'},
+      {'title': 'Merge PDFs', 'subtitle': 'Combine multiple files into one', 'icon': Icons.call_merge_rounded, 'badge': 'Popular'},
       {'title': 'Organize Pages', 'subtitle': 'Reorder, rotate, or delete pages', 'icon': Icons.layers, 'badge': 'New'},
+      {'title': 'Compress PDF', 'subtitle': 'Shrink file size for sharing', 'icon': Icons.compress_rounded, 'badge': 'Fast'},
       {'title': 'Watermark', 'subtitle': 'Add text and page numbers', 'icon': Icons.branding_watermark, 'badge': 'New'},
+      {'title': 'Extract Text', 'subtitle': 'Extract text from PDF pages', 'icon': Icons.text_snippet, 'badge': 'New'},
       {'title': 'Protect PDF', 'subtitle': 'Encrypt with a password', 'icon': Icons.lock, 'badge': null},
       {'title': 'Unlock PDF', 'subtitle': 'Remove existing password', 'icon': Icons.lock_open, 'badge': null},
-      {'title': 'Sign PDF', 'subtitle': 'Draw your signature on a page', 'icon': Icons.draw, 'badge': 'New'},
-      {'title': 'Extract Text', 'subtitle': 'Extract text from PDF pages', 'icon': Icons.text_snippet, 'badge': 'New'},
-      {'title': 'PDF to Image', 'subtitle': 'Extract pages as JPEG/PNG', 'icon': Icons.image, 'badge': null},
     ];
 
     IconData themeIcon = Icons.brightness_auto;

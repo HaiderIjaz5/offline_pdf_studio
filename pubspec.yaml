@@ -54,6 +54,7 @@ dependencies:
   share_plus: any
   shared_preferences: any
   syncfusion_flutter_signaturepad: any
+  reorderable_grid_view: any
 
 dev_dependencies:
   flutter_test:

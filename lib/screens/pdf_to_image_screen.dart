@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/pdf_service.dart';
 import '../utils/file_saver.dart';
+import '../utils/page_parser.dart';
 import '../widgets/pdf_viewer_scaffold.dart';
 import '../mixins/processing_state_mixin.dart';
 import 'success_screen.dart';
@@ -19,6 +20,19 @@ class PdfToImageScreen extends StatefulWidget {
 class _PdfToImageScreenState extends State<PdfToImageScreen> with ProcessingStateMixin {
   final TextEditingController _pageController = TextEditingController(text: '1');
   bool _convertAll = false;
+  int _maxPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPageCount();
+  }
+
+  Future<void> _loadPageCount() async {
+    dynamic input = kIsWeb ? widget.file.bytes : widget.file.path;
+    _maxPage = await PdfService.getPageCount(input);
+    if (mounted) setState(() {});
+  }
 
   @override
   void dispose() {
@@ -27,11 +41,16 @@ class _PdfToImageScreenState extends State<PdfToImageScreen> with ProcessingStat
   }
 
   Future<void> _convertAndSave() async {
+    List<int> pagesToConvert = [];
     if (!_convertAll) {
-      final int? pageNumber = int.tryParse(_pageController.text.trim());
-      
-      if (pageNumber == null || pageNumber < 1) {
-        showErrorSnackBar('Please enter a valid positive page number.');
+      if (_maxPage == 0) {
+        showErrorSnackBar('Failed to load PDF page count.');
+        return;
+      }
+      try {
+        pagesToConvert = PageParser.parse(_pageController.text, _maxPage);
+      } catch (e) {
+        showErrorSnackBar(e.toString().replaceAll('FormatException: ', ''));
         return;
       }
     }
@@ -61,26 +80,49 @@ class _PdfToImageScreenState extends State<PdfToImageScreen> with ProcessingStat
           showErrorSnackBar('Failed to extract images.');
         }
       } else {
-        final int pageNumber = int.parse(_pageController.text.trim());
-        final Uint8List? resultBytes = await PdfService.renderPdfPageToImage(input, pageNumber);
+        if (pagesToConvert.length == 1) {
+          final int pageNumber = pagesToConvert.first;
+          final Uint8List? resultBytes = await PdfService.renderPdfPageToImage(input, pageNumber);
 
-        if (resultBytes != null) {
-          final String? savedPath = await FileSaver.saveFile(resultBytes, 'page_$pageNumber.png');
-          
-          if (mounted && savedPath != null) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => SuccessScreen(
-                  filePath: savedPath,
-                  fileBytes: resultBytes,
-                  isImage: true,
+          if (resultBytes != null) {
+            final String? savedPath = await FileSaver.saveFile(resultBytes, 'page_$pageNumber.png');
+            
+            if (mounted && savedPath != null) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SuccessScreen(
+                    filePath: savedPath,
+                    fileBytes: resultBytes,
+                    isImage: true,
+                  ),
                 ),
-              ),
-            );
+              );
+            }
+          } else {
+            showErrorSnackBar('Failed to extract page as image.');
           }
         } else {
-          showErrorSnackBar('Failed to extract page as image.');
+          final List<Uint8List>? resultBytesList = await PdfService.renderPdfPagesToImages(input, pagesToConvert);
+          
+          if (resultBytesList != null && resultBytesList.isNotEmpty) {
+            List<String> fileNames = List.generate(resultBytesList.length, (i) => 'page_${pagesToConvert[i]}.png');
+            final String? savedPath = await FileSaver.saveMultipleFiles(resultBytesList, fileNames, 'pdf_images.zip');
+            
+            if (mounted && savedPath != null) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SuccessScreen(
+                    filePath: savedPath,
+                    multiFileBytes: resultBytesList,
+                  ),
+                ),
+              );
+            }
+          } else {
+            showErrorSnackBar('Failed to extract images.');
+          }
         }
       }
     });
@@ -108,11 +150,10 @@ class _PdfToImageScreenState extends State<PdfToImageScreen> with ProcessingStat
                 Expanded(
                   child: TextField(
                     controller: _pageController,
-                    keyboardType: TextInputType.number,
                     enabled: !_convertAll,
                     decoration: const InputDecoration(
-                      labelText: 'Page Number',
-                      hintText: 'e.g. 1',
+                      labelText: 'Pages',
+                      hintText: 'e.g. 1-3, 5, 7-9',
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
@@ -120,7 +161,7 @@ class _PdfToImageScreenState extends State<PdfToImageScreen> with ProcessingStat
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton.icon(
-                  onPressed: isProcessing ? null : _convertAndSave,
+                  onPressed: (isProcessing || _maxPage == 0) ? null : _convertAndSave,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFD32F2F),
                     foregroundColor: Colors.white,

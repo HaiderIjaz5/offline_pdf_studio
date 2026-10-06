@@ -225,6 +225,57 @@ class PdfService {
     }
   }
 
+  static Future<int> getPageCount(dynamic fileInput) async {
+    try {
+      pdfx.PdfDocument document;
+      if (kIsWeb) {
+        document = await pdfx.PdfDocument.openData(fileInput as Uint8List);
+      } else {
+        document = await pdfx.PdfDocument.openFile(fileInput as String);
+      }
+      final count = document.pagesCount;
+      await document.close();
+      return count;
+    } catch (e) {
+      debugPrint('Error getting page count: $e');
+      return 0;
+    }
+  }
+
+  static Future<List<Uint8List>?> renderPdfPagesToImages(dynamic fileInput, List<int> pages) async {
+    try {
+      pdfx.PdfDocument document;
+      if (kIsWeb) {
+        document = await pdfx.PdfDocument.openData(fileInput as Uint8List);
+      } else {
+        document = await pdfx.PdfDocument.openFile(fileInput as String);
+      }
+      
+      final List<Uint8List> images = [];
+      for (final pageNumber in pages) {
+        final page = await document.getPage(pageNumber);
+        final pageImage = await page.render(
+          width: page.width * 2.0, 
+          height: page.height * 2.0,
+          format: pdfx.PdfPageImageFormat.png,
+          backgroundColor: '#FFFFFF',
+        );
+        if (pageImage?.bytes != null) {
+          images.add(pageImage!.bytes);
+        } else {
+          throw Exception('Failed to render page $pageNumber');
+        }
+        await page.close();
+      }
+      
+      await document.close();
+      return images;
+    } catch (e) {
+      debugPrint('Error rendering PDF pages: $e');
+      return null;
+    }
+  }
+
   /// Reorders pages in the PDF according to newOrder (list of 0-based indices).
   static Future<Uint8List?> reorderPages(dynamic fileInput, List<int> newOrder) async {
     try {
@@ -291,7 +342,7 @@ class PdfService {
   }
 
   /// Adds a watermark text, optionally adds page numbers to the footer.
-  static Future<Uint8List?> addWatermarkAndPageNumbers(dynamic fileInput, {String? watermarkText, bool diagonal = true, bool addPageNumbers = false}) async {
+  static Future<Uint8List?> addWatermarkAndPageNumbers(dynamic fileInput, {String? watermarkText, bool diagonal = true, bool addPageNumbers = false, List<int>? pages}) async {
     try {
       PdfDocument document;
       if (kIsWeb) {
@@ -306,6 +357,8 @@ class PdfService {
       final PdfBrush pageNumberBrush = PdfSolidBrush(PdfColor(0, 0, 0));
 
       for (int i = 0; i < document.pages.count; i++) {
+        if (pages != null && !pages.contains(i + 1)) continue;
+
         final PdfPage page = document.pages[i];
         final Size pageSize = page.getClientSize();
 
@@ -401,8 +454,7 @@ class PdfService {
     }
   }
 
-  /// Adds a signature image to a specific page at a preset position.
-  static Future<Uint8List?> addSignature(dynamic fileInput, int pageIndex, Uint8List signatureBytes, {String position = 'bottomRight'}) async {
+  static Future<Uint8List?> addSignature(dynamic fileInput, int pageIndex, Uint8List signatureBytes, {required double xFraction, required double yFraction, required double widthFraction, required double rotationDegrees}) async {
     try {
       PdfDocument document;
       if (kIsWeb) {
@@ -416,26 +468,18 @@ class PdfService {
         final PdfBitmap image = PdfBitmap(signatureBytes);
         
         final Size pageSize = page.getClientSize();
-        // Scale signature proportionally to page size
-        final double width = pageSize.width * 0.25;
+        
+        final double width = pageSize.width * widthFraction;
         final double height = (image.height / image.width) * width;
         
-        double x = 0;
-        double y = 0;
-        final double padding = 20;
+        final double x = pageSize.width * xFraction;
+        final double y = pageSize.height * yFraction;
         
-        if (position == 'bottomRight') {
-          x = pageSize.width - width - padding;
-          y = pageSize.height - height - padding;
-        } else if (position == 'bottomLeft') {
-          x = padding;
-          y = pageSize.height - height - padding;
-        } else if (position == 'topRight') {
-          x = pageSize.width - width - padding;
-          y = padding;
-        }
-        
-        page.graphics.drawImage(image, Rect.fromLTWH(x, y, width, height));
+        page.graphics.save();
+        page.graphics.translateTransform(x + width / 2, y + height / 2);
+        page.graphics.rotateTransform(rotationDegrees);
+        page.graphics.drawImage(image, Rect.fromLTWH(-width / 2, -height / 2, width, height));
+        page.graphics.restore();
       }
       
       final List<int> bytes = document.saveSync();

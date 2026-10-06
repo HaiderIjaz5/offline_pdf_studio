@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import '../services/pdf_service.dart';
 import '../utils/file_saver.dart';
 import '../utils/strings.dart';
@@ -91,18 +92,24 @@ class _OrganizePagesScreenState extends State<OrganizePagesScreen> with Processi
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(title: const Text('Organize Pages')),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) 
         : Column(
           children: [
             Expanded(
-              child: ReorderableListView.builder(
+              child: ReorderableGridView.builder(
                 padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 0.7,
+                ),
                 itemCount: _pageOrder.length,
                 onReorder: (oldIndex, newIndex) {
                   setState(() {
-                    if (oldIndex < newIndex) newIndex -= 1;
-                    final item = _pageOrder.removeAt(oldIndex);
+                    final int item = _pageOrder.removeAt(oldIndex);
                     _pageOrder.insert(newIndex, item);
                   });
                 },
@@ -110,22 +117,65 @@ class _OrganizePagesScreenState extends State<OrganizePagesScreen> with Processi
                   final originalIndex = _pageOrder[index];
                   final rotation = _rotations[originalIndex] ?? 0;
                   return Card(
-                    key: ValueKey(originalIndex),
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      leading: RotatedBox(
-                        quarterTurns: rotation ~/ 90,
-                        child: Image.memory(_pages[originalIndex], width: 50, height: 70, fit: BoxFit.cover),
-                      ),
-                      title: Text('Page ${originalIndex + 1}'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(icon: const Icon(Icons.rotate_right), onPressed: () => _rotatePage(originalIndex)),
-                          IconButton(icon: const Icon(Icons.delete), onPressed: () => _deletePage(index)),
-                          const Icon(Icons.drag_handle),
-                        ],
-                      ),
+                    key: ValueKey(originalIndex.toString()),
+                    elevation: 2,
+                    clipBehavior: Clip.antiAlias,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        RotatedBox(
+                          quarterTurns: rotation ~/ 90,
+                          child: Image.memory(
+                            _pages[originalIndex],
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => _deletePage(index),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.delete, color: Colors.white, size: 16),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          left: 4,
+                          child: GestureDetector(
+                            onTap: () => _rotatePage(originalIndex),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.rotate_right, color: Colors.white, size: 16),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            color: Colors.black54,
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Center(
+                              child: Text(
+                                '${index + 1}',
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },

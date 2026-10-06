@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'dart:typed_data';
 
@@ -53,4 +54,29 @@ Future<String?> saveMultipleFilesImpl(List<List<int>> filesBytes, List<String> f
     return outputFile;
   }
   return null;
+}
+
+Future<String?> saveAppCopyImpl(List<int> bytes, String fileName) async {
+  try {
+    final directory = await getApplicationDocumentsDirectory();
+    final folder = Directory('${directory.path}/OfflinePDFStudio');
+    if (!await folder.exists()) {
+      await folder.create(recursive: true);
+    }
+    
+    String path = '${folder.path}/$fileName';
+    int counter = 1;
+    while (await File(path).exists()) {
+      final nameParts = fileName.split('.');
+      String nameWithoutExt = nameParts.length > 1 ? nameParts.sublist(0, nameParts.length - 1).join('.') : fileName;
+      String ext = nameParts.length > 1 ? '.${nameParts.last}' : '';
+      path = '${folder.path}/$nameWithoutExt($counter)$ext';
+      counter++;
+    }
+    
+    await File(path).writeAsBytes(bytes, flush: true);
+    return path;
+  } catch (e) {
+    return null;
+  }
 }

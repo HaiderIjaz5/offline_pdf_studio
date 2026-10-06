@@ -35,6 +35,36 @@ class _MergePreviewScreenState extends State<MergePreviewScreen> with Processing
     });
   }
 
+  void _removeFile(int index) {
+    setState(() {
+      _files.removeAt(index);
+    });
+  }
+
+  Future<void> _addMoreFiles() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+      withData: kIsWeb,
+    );
+
+    if (result != null) {
+      final existingNames = _files.map((e) => e.name).toSet();
+      final existingPaths = _files.map((e) => e.path).whereType<String>().toSet();
+
+      setState(() {
+        for (var file in result.files) {
+          if (existingNames.contains(file.name)) continue;
+          if (file.path != null && existingPaths.contains(file.path)) continue;
+          _files.add(file);
+          existingNames.add(file.name);
+          if (file.path != null) existingPaths.add(file.path!);
+        }
+      });
+    }
+  }
+
   Future<void> _mergeAndSave() async {
     await runProcessingTask(() async {
       List<String> paths = [];
@@ -78,10 +108,25 @@ class _MergePreviewScreenState extends State<MergePreviewScreen> with Processing
         foregroundColor: const Color(0xFF1E1E1E),
         elevation: 0,
         scrolledUnderElevation: 1,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            onPressed: _addMoreFiles,
+            tooltip: 'Add more',
+          ),
+        ],
       ),
       body: Column(
         children: [
           const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
+          if (_files.isNotEmpty && _files.length < 2)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Select at least 2 PDF files to merge.',
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+            ),
           Expanded(
             child: _files.isEmpty
                 ? const Center(child: Text('No files selected.'))
@@ -99,7 +144,16 @@ class _MergePreviewScreenState extends State<MergePreviewScreen> with Processing
                           leading: const Icon(Icons.picture_as_pdf, color: Color(0xFFD32F2F)),
                           title: Text(file.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                           subtitle: Text('File ${index + 1}'),
-                          trailing: const Icon(Icons.drag_handle, color: Colors.grey),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _removeFile(index),
+                              ),
+                              const Icon(Icons.drag_handle, color: Colors.grey),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -108,7 +162,7 @@ class _MergePreviewScreenState extends State<MergePreviewScreen> with Processing
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: isProcessing ? null : _mergeAndSave,
+        onPressed: (isProcessing || _files.length < 2) ? null : _mergeAndSave,
         backgroundColor: const Color(0xFFD32F2F),
         foregroundColor: Colors.white,
         icon: isProcessing

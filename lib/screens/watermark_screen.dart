@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import '../services/pdf_service.dart';
 import '../utils/file_saver.dart';
 import '../utils/strings.dart';
+import '../utils/page_parser.dart';
 import '../mixins/processing_state_mixin.dart';
 import 'success_screen.dart';
 
@@ -16,16 +17,46 @@ class WatermarkScreen extends StatefulWidget {
 
 class _WatermarkScreenState extends State<WatermarkScreen> with ProcessingStateMixin {
   final TextEditingController _textController = TextEditingController();
+  final TextEditingController _pagesController = TextEditingController();
   bool _diagonal = true;
   bool _addPageNumbers = false;
+  bool _allPages = true;
+  int _maxPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPageCount();
+  }
+
+  Future<void> _loadPageCount() async {
+    dynamic input = kIsWeb ? widget.file.bytes : widget.file.path;
+    _maxPage = await PdfService.getPageCount(input);
+    if (mounted) setState(() {});
+  }
 
   @override
   void dispose() {
     _textController.dispose();
+    _pagesController.dispose();
     super.dispose();
   }
 
   Future<void> _apply() async {
+    List<int>? pages;
+    if (!_allPages) {
+      if (_maxPage == 0) {
+        showErrorSnackBar('Failed to load PDF page count.');
+        return;
+      }
+      try {
+        pages = PageParser.parse(_pagesController.text, _maxPage);
+      } catch (e) {
+        showErrorSnackBar(e.toString().replaceAll('FormatException: ', ''));
+        return;
+      }
+    }
+
     await runProcessingTask(() async {
       dynamic input = kIsWeb ? widget.file.bytes : widget.file.path;
       final Uint8List? resultBytes = await PdfService.addWatermarkAndPageNumbers(
@@ -33,6 +64,7 @@ class _WatermarkScreenState extends State<WatermarkScreen> with ProcessingStateM
         watermarkText: _textController.text,
         diagonal: _diagonal,
         addPageNumbers: _addPageNumbers,
+        pages: pages,
       );
 
       if (resultBytes != null) {
@@ -65,6 +97,23 @@ class _WatermarkScreenState extends State<WatermarkScreen> with ProcessingStateM
             ),
             const SizedBox(height: 16),
             SwitchListTile(
+              title: const Text('All pages'),
+              value: _allPages,
+              onChanged: (val) => setState(() => _allPages = val),
+            ),
+            if (!_allPages) ...[
+              const SizedBox(height: 16),
+              TextField(
+                controller: _pagesController,
+                decoration: const InputDecoration(
+                  labelText: 'Pages',
+                  hintText: 'e.g. 1-3, 5, 7-9',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            SwitchListTile(
               title: const Text('Diagonal Placement'),
               value: _diagonal,
               onChanged: (val) => setState(() => _diagonal = val),
@@ -79,7 +128,7 @@ class _WatermarkScreenState extends State<WatermarkScreen> with ProcessingStateM
               width: double.infinity,
               height: 50,
               child: ElevatedButton.icon(
-                onPressed: isProcessing ? null : _apply,
+                onPressed: (isProcessing || _maxPage == 0) ? null : _apply,
                 icon: isProcessing ? const CircularProgressIndicator() : const Icon(Icons.branding_watermark),
                 label: Text(isProcessing ? AppStrings.processing : 'Apply'),
               ),

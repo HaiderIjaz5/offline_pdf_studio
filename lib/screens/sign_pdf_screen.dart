@@ -3,11 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
-import '../services/pdf_service.dart';
-import '../utils/file_saver.dart';
-import '../utils/strings.dart';
 import '../mixins/processing_state_mixin.dart';
-import 'success_screen.dart';
+import 'sign_pdf_placement_screen.dart';
 
 class SignPdfScreen extends StatefulWidget {
   final PlatformFile file;
@@ -18,111 +15,114 @@ class SignPdfScreen extends StatefulWidget {
 
 class _SignPdfScreenState extends State<SignPdfScreen> with ProcessingStateMixin {
   final GlobalKey<SfSignaturePadState> _signaturePadKey = GlobalKey();
-  int _selectedPage = 0;
-  String _position = 'bottomRight';
+  Color _strokeColor = Colors.black;
 
-  Future<void> _save() async {
-    await runProcessingTask(() async {
-      try {
-        final ui.Image image = await _signaturePadKey.currentState!.toImage();
-        final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-        if (byteData == null) {
-          showErrorSnackBar('Failed to render signature.');
-          return;
-        }
-        final Uint8List signatureBytes = byteData.buffer.asUint8List();
+  final List<Color> _swatches = [
+    Colors.black,
+    const Color(0xFF00008B), // Dark blue
+    Colors.blue,
+    Colors.red,
+    Colors.green,
+  ];
 
-        dynamic input = kIsWeb ? widget.file.bytes : widget.file.path;
-        final Uint8List? resultBytes = await PdfService.addSignature(input, _selectedPage, signatureBytes, position: _position);
-
-        if (resultBytes != null) {
-          final String? savedPath = await FileSaver.saveFile(resultBytes, 'signed_${widget.file.name}');
-          if (mounted && savedPath != null) {
-            Navigator.pushReplacement(context, MaterialPageRoute(
-              builder: (_) => SuccessScreen(filePath: savedPath, fileBytes: resultBytes),
-            ));
-          }
-        } else {
-          showErrorSnackBar(AppStrings.errorGeneric);
-        }
-      } catch (e) {
-        showErrorSnackBar('Please draw a signature first.');
+  Future<void> _next() async {
+    try {
+      final ui.Image image = await _signaturePadKey.currentState!.toImage();
+      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) {
+        showErrorSnackBar('Failed to render signature.');
+        return;
       }
-    });
+      final Uint8List signatureBytes = byteData.buffer.asUint8List();
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SignPdfPlacementScreen(
+              file: widget.file,
+              signatureBytes: signatureBytes,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      showErrorSnackBar('Please draw a signature first.');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign PDF')),
+      appBar: AppBar(
+        title: const Text('Draw Signature'),
+        actions: [
+          TextButton(
+            onPressed: _next,
+            child: const Text('Next', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Page Number to Sign',
-                hintText: 'e.g. 1',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (val) {
-                final page = int.tryParse(val);
-                if (page != null && page > 0) {
-                  _selectedPage = page - 1;
-                }
-              },
+            const Text('Select Ink Color:', style: TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: _swatches.map((color) {
+                return GestureDetector(
+                  onTap: () => setState(() => _strokeColor = color),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _strokeColor == color ? Colors.grey.shade400 : Colors.transparent,
+                        width: 3,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(2, 2)),
+                      ],
+                    ),
+                    child: _strokeColor == color
+                        ? const Icon(Icons.check, color: Colors.white, size: 20)
+                        : null,
+                  ),
+                );
+              }).toList(),
             ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _position,
-              decoration: const InputDecoration(
-                labelText: 'Position',
-                border: OutlineInputBorder(),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'bottomRight', child: Text('Bottom Right')),
-                DropdownMenuItem(value: 'bottomLeft', child: Text('Bottom Left')),
-                DropdownMenuItem(value: 'topRight', child: Text('Top Right')),
-              ],
-              onChanged: (val) {
-                if (val != null) setState(() => _position = val);
-              },
-            ),
-            const SizedBox(height: 16),
-            const Text('Draw your signature below:'),
+            const SizedBox(height: 24),
+            const Text('Draw your signature below:', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Expanded(
               child: Container(
-                decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade400),
+                  color: Colors.grey.shade100, // Just a subtle background behind the pad
+                ),
                 child: SfSignaturePad(
                   key: _signaturePadKey,
-                  backgroundColor: Colors.white,
-                  strokeColor: Colors.black,
+                  backgroundColor: Colors.transparent,
+                  strokeColor: _strokeColor,
                   minimumStrokeWidth: 1.0,
                   maximumStrokeWidth: 4.0,
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _signaturePadKey.currentState?.clear(),
-                    child: const Text('Clear'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: isProcessing ? null : _save,
-                    icon: isProcessing ? const CircularProgressIndicator() : const Icon(Icons.check),
-                    label: Text(isProcessing ? AppStrings.processing : 'Sign'),
-                  ),
-                ),
-              ],
-            )
+            OutlinedButton.icon(
+              onPressed: () => _signaturePadKey.currentState?.clear(),
+              icon: const Icon(Icons.clear),
+              label: const Text('Clear Signature'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
           ],
         ),
       ),

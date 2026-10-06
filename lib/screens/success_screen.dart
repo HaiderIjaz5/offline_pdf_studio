@@ -6,11 +6,14 @@ import 'package:in_app_review/in_app_review.dart';
 
 import '../widgets/ad_banner.dart';
 import '../services/settings_service.dart';
+import '../utils/file_saver.dart';
+import 'package:archive/archive.dart';
 import 'pdf_viewer_screen.dart';
 import 'package:path/path.dart' as p;
 
 class SuccessScreen extends StatefulWidget {
   final String filePath;
+  final String? internalPath;
   final Uint8List? fileBytes;
   final List<Uint8List>? multiFileBytes;
   final bool isImage;
@@ -19,6 +22,7 @@ class SuccessScreen extends StatefulWidget {
   const SuccessScreen({
     super.key,
     required this.filePath,
+    this.internalPath,
     this.fileBytes,
     this.multiFileBytes,
     this.isImage = false,
@@ -34,12 +38,27 @@ class _SuccessScreenState extends State<SuccessScreen> {
   void initState() {
     super.initState();
     _handlePostSuccessOperations();
-  }
-
   Future<void> _handlePostSuccessOperations() async {
     if (!kIsWeb && widget.filePath != 'Web Download') {
       final fileName = p.basename(widget.filePath);
-      await SettingsService.addRecentFile(fileName, widget.filePath, widget.operation);
+      
+      String? internalPath = widget.internalPath;
+      if (internalPath == null) {
+        if (widget.fileBytes != null) {
+          internalPath = await FileSaver.saveAppCopy(widget.fileBytes!, fileName);
+        } else if (widget.multiFileBytes != null) {
+          final archive = Archive();
+          for (int i = 0; i < widget.multiFileBytes!.length; i++) {
+            archive.addFile(ArchiveFile('page_${i+1}.png', widget.multiFileBytes![i].length, widget.multiFileBytes![i]));
+          }
+          final zipData = ZipEncoder().encode(archive);
+          if (zipData != null) {
+            internalPath = await FileSaver.saveAppCopy(zipData, fileName);
+          }
+        }
+      }
+      
+      await SettingsService.addRecentFile(fileName, internalPath ?? widget.filePath, widget.operation);
     }
     
     final bool shouldAsk = await SettingsService.incrementAndCheckReview();

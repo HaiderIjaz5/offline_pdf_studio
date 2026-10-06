@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' as java_io;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsService {
@@ -71,5 +72,11 @@ class SettingsService {
       return decoded['path'] == path;
     });
     await prefs.setStringList(_keyRecentFiles, recents);
+    try {
+      final file = java_io.File(path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (_) {}
   }
 }

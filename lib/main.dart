@@ -115,19 +115,19 @@ class _OfflinePdfStudioAppState extends State<OfflinePdfStudioApp> {
           debugShowCheckedModeBanner: false,
           themeMode: currentMode,
           theme: ThemeData(
-            useMaterial3: true,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFFD32F2F),
+            useMaterial3: false,
+            primaryColor: const Color(0xFFD32F2F),
+            colorScheme: ColorScheme.fromSwatch(brightness: Brightness.light).copyWith(
               primary: const Color(0xFFD32F2F),
-              brightness: Brightness.light,
+              secondary: const Color(0xFFD32F2F),
             ),
           ),
           darkTheme: ThemeData(
-            useMaterial3: true,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFFD32F2F),
+            useMaterial3: false,
+            primaryColor: const Color(0xFFD32F2F),
+            colorScheme: ColorScheme.fromSwatch(brightness: Brightness.dark).copyWith(
               primary: const Color(0xFFD32F2F),
-              brightness: Brightness.dark,
+              secondary: const Color(0xFFD32F2F),
             ),
           ),
           home: const HomeScreen(),
