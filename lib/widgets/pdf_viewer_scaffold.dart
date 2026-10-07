@@ -141,7 +141,18 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
             IconButton(
               icon: const Icon(Icons.share),
               onPressed: (_pageCount > 0 && widget.filePath != null && !kIsWeb) 
-                  ? () => Share.shareXFiles([XFile(widget.filePath!)])
+                  ? () {
+                      String mimeType = '*/*';
+                      final lower = widget.filePath!.toLowerCase();
+                      if (lower.endsWith('.pdf')) {
+                        mimeType = 'application/pdf';
+                      } else if (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+                        mimeType = 'image/*';
+                      } else if (lower.endsWith('.zip')) {
+                        mimeType = 'application/zip';
+                      }
+                      Share.shareXFiles([XFile(widget.filePath!, mimeType: mimeType)]);
+                    }
                   : null,
             ),
             const SizedBox(width: 8),

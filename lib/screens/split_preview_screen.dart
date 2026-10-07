@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/pdf_service.dart';
 import '../utils/file_saver.dart';
+import '../utils/page_parser.dart';
 import '../widgets/pdf_viewer_scaffold.dart';
 import '../mixins/processing_state_mixin.dart';
 import 'success_screen.dart';
@@ -25,42 +26,20 @@ class _SplitPreviewScreenState extends State<SplitPreviewScreen> with Processing
     super.dispose();
   }
 
-  List<int> _parsePageRange(String input) {
-    // E.g., "1, 3, 5-7" -> [0, 2, 4, 5, 6] (0-indexed)
-    final List<int> pages = [];
-    final parts = input.split(',');
-    
-    for (var part in parts) {
-      part = part.trim();
-      if (part.isEmpty) continue;
-      
-      if (part.contains('-')) {
-        final rangeParts = part.split('-');
-        if (rangeParts.length == 2) {
-          final start = int.tryParse(rangeParts[0].trim());
-          final end = int.tryParse(rangeParts[1].trim());
-          if (start != null && end != null && start <= end && start > 0) {
-            for (int i = start; i <= end; i++) {
-              pages.add(i - 1);
-            }
-          }
-        }
-      } else {
-        final page = int.tryParse(part);
-        if (page != null && page > 0) {
-          pages.add(page - 1);
-        }
-      }
-    }
-    return pages.toSet().toList(); // Remove duplicates
-  }
-
   Future<void> _splitAndSave() async {
-    final pagesToExtract = _parsePageRange(_rangeController.text);
-    if (pagesToExtract.isEmpty) {
+    final maxPage = await PdfService.getPageCount(kIsWeb ? widget.file.bytes : widget.file.path);
+    late final List<int> parsedPages;
+    try {
+      parsedPages = PageParser.parse(_rangeController.text, maxPage);
+    } catch (e) {
+      showErrorSnackBar(e.toString().replaceFirst('FormatException: ', ''));
+      return;
+    }
+    if (parsedPages.isEmpty) {
       showErrorSnackBar('Please enter a valid page range (e.g., 1, 3, 5-7).');
       return;
     }
+    final pagesToExtract = parsedPages.map((p) => p - 1).toList();
 
     await runProcessingTask(() async {
       dynamic input = kIsWeb ? widget.file.bytes : widget.file.path;

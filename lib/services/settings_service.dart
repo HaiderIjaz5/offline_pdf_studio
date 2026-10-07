@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io' as java_io;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 class SettingsService {
   static const String _keyTheme = 'theme_mode';
@@ -90,8 +92,10 @@ class SettingsService {
     });
     await prefs.setStringList(_keyRecentFiles, recents);
     try {
+      final dir = await getApplicationDocumentsDirectory();
+      final privateFolder = java_io.Directory('${dir.path}/OfflinePDFStudio');
       final file = java_io.File(path);
-      if (await file.exists()) {
+      if (p.isWithin(privateFolder.path, file.path) && await file.exists()) {
         await file.delete();
       }
     } catch (_) {}

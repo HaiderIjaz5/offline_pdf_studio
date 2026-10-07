@@ -242,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     margin: const EdgeInsets.only(right: 12),
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: isDark ? Colors.grey[850] : Colors.white,
+                                      color: isDark ? Colors.grey[900] : Colors.white,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
                                     ),
