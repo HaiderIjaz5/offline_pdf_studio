@@ -30,7 +30,7 @@ class _CompressPreviewScreenState extends State<CompressPreviewScreen> with Proc
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => SuccessScreen(filePath: savedPath, fileBytes: resultBytes),
+              builder: (_) => SuccessScreen(filePath: savedPath, fileName: 'compressed_document.pdf', fileBytes: resultBytes),
             ),
           );
         }

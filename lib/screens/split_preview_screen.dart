@@ -73,7 +73,7 @@ class _SplitPreviewScreenState extends State<SplitPreviewScreen> with Processing
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => SuccessScreen(filePath: savedPath, fileBytes: resultBytes),
+              builder: (_) => SuccessScreen(filePath: savedPath, fileName: 'split_document.pdf', fileBytes: resultBytes),
             ),
           );
         }

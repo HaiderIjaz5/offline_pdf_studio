@@ -71,6 +71,7 @@ class _PdfToImageScreenState extends State<PdfToImageScreen> with ProcessingStat
               MaterialPageRoute(
                 builder: (_) => SuccessScreen(
                   filePath: savedPath,
+                  fileName: 'pdf_images.zip',
                   multiFileBytes: resultBytesList,
                 ),
               ),
@@ -93,6 +94,7 @@ class _PdfToImageScreenState extends State<PdfToImageScreen> with ProcessingStat
                 MaterialPageRoute(
                   builder: (_) => SuccessScreen(
                     filePath: savedPath,
+                    fileName: 'page_$pageNumber.png',
                     fileBytes: resultBytes,
                     isImage: true,
                   ),
@@ -115,6 +117,7 @@ class _PdfToImageScreenState extends State<PdfToImageScreen> with ProcessingStat
                 MaterialPageRoute(
                   builder: (_) => SuccessScreen(
                     filePath: savedPath,
+                    fileName: 'pdf_images.zip',
                     multiFileBytes: resultBytesList,
                   ),
                 ),

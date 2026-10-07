@@ -13,6 +13,7 @@ import 'package:path/path.dart' as p;
 
 class SuccessScreen extends StatefulWidget {
   final String filePath;
+  final String? fileName;
   final String? internalPath;
   final Uint8List? fileBytes;
   final List<Uint8List>? multiFileBytes;
@@ -22,6 +23,7 @@ class SuccessScreen extends StatefulWidget {
   const SuccessScreen({
     super.key,
     required this.filePath,
+    this.fileName,
     this.internalPath,
     this.fileBytes,
     this.multiFileBytes,
@@ -47,12 +49,33 @@ class _SuccessScreenState extends State<SuccessScreen> {
   
   Future<void> _handlePostSuccessOperations() async {
     if (!kIsWeb && widget.filePath != 'Web Download') {
-      final fileName = p.basename(widget.filePath);
+      String raw = (widget.fileName?.trim().isNotEmpty ?? false)
+          ? widget.fileName!.trim()
+          : p.basename(widget.filePath);
+      // sanitize: decode URI artifacts, reject garbage
+      String name;
+      try { name = Uri.decodeComponent(raw); } catch (_) { name = raw; }
+      if (name.contains('://') || name.contains('%')) name = 'document';
+      name = name.replaceAll(RegExp(r'[^a-zA-Z0-9\-_ .]'), '_').trim();
+      if (name.isEmpty) name = 'document';
+      // guarantee extension from content magic bytes
+      if (!name.contains('.')) {
+        final b = widget.fileBytes ?? widget.multiFileBytes?.firstOrNull ?? [];
+        if (b.length > 4 && b[0] == 0x25 && b[1] == 0x50 && b[2] == 0x44 && b[3] == 0x46) {
+          name = '$name.pdf';                                    // %PDF
+        } else if (b.length > 4 && b[0] == 0x89 && b[1] == 0x50) {
+          name = '$name.png';                                    // PNG
+        } else if (b.length > 2 && b[0] == 0x50 && b[1] == 0x4B) {
+          name = '$name.zip';                                    // PK zip
+        } else {
+          name = '$name.pdf';
+        }
+      }
       
       String? internalPath = widget.internalPath;
       if (internalPath == null) {
         if (widget.fileBytes != null) {
-          internalPath = await FileSaver.saveAppCopy(widget.fileBytes!, fileName);
+          internalPath = await FileSaver.saveAppCopy(widget.fileBytes!, name);
         } else if (widget.multiFileBytes != null) {
           final archive = Archive();
           for (int i = 0; i < widget.multiFileBytes!.length; i++) {
@@ -60,7 +83,7 @@ class _SuccessScreenState extends State<SuccessScreen> {
           }
           final zipData = ZipEncoder().encode(archive);
           if (zipData != null) {
-            internalPath = await FileSaver.saveAppCopy(zipData, fileName);
+            internalPath = await FileSaver.saveAppCopy(zipData, name);
           }
         }
       }
@@ -71,7 +94,7 @@ class _SuccessScreenState extends State<SuccessScreen> {
         });
       }
       
-      await SettingsService.addRecentFile(fileName, internalPath ?? widget.filePath, widget.operation);
+      await SettingsService.addRecentFile(name, internalPath ?? widget.filePath, widget.operation);
     }
     
     if (mounted) {

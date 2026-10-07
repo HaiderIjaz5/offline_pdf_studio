@@ -52,7 +52,7 @@ class _ImageToPdfScreenState extends State<ImageToPdfScreen> with ProcessingStat
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => SuccessScreen(filePath: savedPath, fileBytes: resultBytes),
+              builder: (_) => SuccessScreen(filePath: savedPath, fileName: 'converted_document.pdf', fileBytes: resultBytes),
             ),
           );
         }

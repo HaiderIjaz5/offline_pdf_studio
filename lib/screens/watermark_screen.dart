@@ -73,7 +73,7 @@ class _WatermarkScreenState extends State<WatermarkScreen> with ProcessingStateM
         final String? savedPath = await FileSaver.saveFile(resultBytes, 'watermarked_${widget.file.name}');
         if (mounted && savedPath != null) {
           Navigator.pushReplacement(context, MaterialPageRoute(
-            builder: (_) => SuccessScreen(filePath: savedPath, fileBytes: resultBytes),
+            builder: (_) => SuccessScreen(filePath: savedPath, fileName: 'watermarked_${widget.file.name}', fileBytes: resultBytes),
           ));
         }
       } else {

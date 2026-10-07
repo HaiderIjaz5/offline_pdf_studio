@@ -85,7 +85,7 @@ class _MergePreviewScreenState extends State<MergePreviewScreen> with Processing
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => SuccessScreen(filePath: savedPath, fileBytes: resultBytes),
+              builder: (_) => SuccessScreen(filePath: savedPath, fileName: 'merged_document.pdf', fileBytes: resultBytes),
             ),
           );
         }

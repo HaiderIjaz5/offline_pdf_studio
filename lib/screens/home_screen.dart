@@ -189,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 12),
             Text(
-              'Offline PDF Studio',
+              'PDF Scanner & Tools Offline',
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22, letterSpacing: -0.5, color: onSurfaceColor),
             ),
           ],

@@ -61,7 +61,24 @@ class SettingsService {
   static Future<List<Map<String, dynamic>>> getRecentFiles() async {
     final prefs = await _prefs;
     final List<String> recents = prefs.getStringList(_keyRecentFiles) ?? [];
-    return recents.map((item) => jsonDecode(item) as Map<String, dynamic>).toList();
+    
+    final validRecents = <String>[];
+    final validParsed = <Map<String, dynamic>>[];
+    
+    for (final item in recents) {
+      final decoded = jsonDecode(item) as Map<String, dynamic>;
+      final path = (decoded['path'] as String).toLowerCase();
+      if (path.endsWith('.pdf') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.zip')) {
+        validRecents.add(item);
+        validParsed.add(decoded);
+      }
+    }
+    
+    if (validRecents.length != recents.length) {
+      await prefs.setStringList(_keyRecentFiles, validRecents);
+    }
+    
+    return validParsed;
   }
 
   static Future<void> removeRecentFile(String path) async {

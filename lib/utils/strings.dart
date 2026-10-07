@@ -1,5 +1,5 @@
 class AppStrings {
-  static const appName = 'Offline PDF Studio';
+  static const appName = 'PDF Scanner & Tools Offline';
   static const errorGeneric = 'An error occurred. Please try again.';
   static const errorOpenPdf = 'Could not open this PDF. It may be corrupted or password protected.';
   static const noTextFound = 'No text found on page';

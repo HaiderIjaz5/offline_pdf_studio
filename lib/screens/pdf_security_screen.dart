@@ -59,7 +59,7 @@ class _PdfSecurityScreenState extends State<PdfSecurityScreen> with ProcessingSt
         final String? savedPath = await FileSaver.saveFile(resultBytes, '$prefix${widget.file.name}');
         if (mounted && savedPath != null) {
           Navigator.pushReplacement(context, MaterialPageRoute(
-            builder: (_) => SuccessScreen(filePath: savedPath, fileBytes: resultBytes),
+            builder: (_) => SuccessScreen(filePath: savedPath, fileName: '$prefix${widget.file.name}', fileBytes: resultBytes),
           ));
         }
       } else {

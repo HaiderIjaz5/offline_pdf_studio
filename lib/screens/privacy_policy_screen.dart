@@ -41,13 +41,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
               context: context,
               title: '1. Introduction',
               content:
-                  'Welcome to Offline PDF Studio. We respect your privacy and are committed to protecting it. This Privacy Policy explains how we handle your data when you use our application.',
+                  'Welcome to PDF Scanner & Tools Offline. We respect your privacy and are committed to protecting it. This Privacy Policy explains how we handle your data when you use our application.',
             ),
             _buildSection(
               context: context,
               title: '2. Local Processing',
               content:
-                  'Offline PDF Studio is designed to be a fully offline tool. All PDF processing (including merging, splitting, converting, and compressing) is performed entirely locally on your device. We do not upload, store, or transmit your documents or images to any external servers.',
+                  'PDF Scanner & Tools Offline is designed to be a fully offline tool. All PDF processing (including merging, splitting, converting, and compressing) is performed entirely locally on your device. We do not upload, store, or transmit your documents or images to any external servers.',
             ),
             _buildSection(
               context: context,

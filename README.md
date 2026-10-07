@@ -1,6 +1,6 @@
-# Offline PDF Studio
+# PDF Scanner & Tools Offline
 
-Offline PDF Studio is a versatile, privacy-focused Flutter application designed for managing and editing PDF files completely offline. 
+PDF Scanner & Tools Offline is a versatile, privacy-focused Flutter application designed for managing and editing PDF files completely offline. 
 
 ## Features
 - **Offline Processing:** All PDF operations are performed locally on your device, ensuring complete privacy and security for your documents. No internet connection is required.

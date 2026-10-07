@@ -111,7 +111,7 @@ class _OfflinePdfStudioAppState extends State<OfflinePdfStudioApp> {
       builder: (_, ThemeMode currentMode, __) {
         return MaterialApp(
           navigatorKey: navigatorKey,
-          title: 'Offline PDF Studio',
+          title: 'PDF Scanner & Tools Offline',
           debugShowCheckedModeBanner: false,
           themeMode: currentMode,
           theme: ThemeData(
