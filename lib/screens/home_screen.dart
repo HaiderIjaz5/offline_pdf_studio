@@ -36,6 +36,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadRecents();
+    SettingsService.recentsNotifier.addListener(_loadRecents);
+  }
+
+  @override
+  void dispose() {
+    SettingsService.recentsNotifier.removeListener(_loadRecents);
+    super.dispose();
   }
 
   Future<void> _loadRecents() async {
@@ -49,11 +56,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _openRecentFile(String path) async {
     if (File(path).existsSync()) {
-      String mimeType = '*/*';
       final lowerPath = path.toLowerCase();
       if (lowerPath.endsWith('.pdf')) {
-        mimeType = 'application/pdf';
-      } else if (lowerPath.endsWith('.png') || lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg')) {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => PdfViewerScreen(filePath: path)));
+        return;
+      }
+
+      String mimeType = '*/*';
+      if (lowerPath.endsWith('.png') || lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg')) {
         mimeType = 'image/*';
       } else if (lowerPath.endsWith('.zip')) {
         mimeType = 'application/zip';
@@ -188,9 +198,15 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             const SizedBox(width: 12),
-            Text(
-              'PDF Scanner & Tools Offline',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22, letterSpacing: -0.5, color: onSurfaceColor),
+            Expanded(
+              child: FittedBox(
+                alignment: Alignment.centerLeft,
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'PDF Scanner & Tools Offline',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22, letterSpacing: -0.5, color: onSurfaceColor),
+                ),
+              ),
             ),
           ],
         ),

@@ -3,8 +3,11 @@ import 'dart:io' as java_io;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:flutter/foundation.dart';
 
 class SettingsService {
+  static final ValueNotifier<int> recentsNotifier = ValueNotifier(0);
+  
   static const String _keyTheme = 'theme_mode';
   static const String _keyReviewCount = 'review_count';
   static const String _keyHasReviewed = 'has_reviewed';
@@ -58,6 +61,7 @@ class SettingsService {
     }
     
     await prefs.setStringList(_keyRecentFiles, recents);
+    recentsNotifier.value++;
   }
 
   static Future<List<Map<String, dynamic>>> getRecentFiles() async {
@@ -99,5 +103,6 @@ class SettingsService {
         await file.delete();
       }
     } catch (_) {}
+    recentsNotifier.value++;
   }
 }
