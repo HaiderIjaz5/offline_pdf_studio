@@ -45,7 +45,7 @@ class _CompressPreviewScreenState extends State<CompressPreviewScreen> with Proc
     return PdfViewerScaffold(
       title: 'Compress PDF',
       filePath: widget.file.path,
-      fileBytes: widget.file.bytes,
+      fileBytes: kIsWeb ? widget.file.bytes : null,
       bottomActionWidget: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

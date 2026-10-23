@@ -32,7 +32,6 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   
-  int _currentPage = 1;
   int _pageCount = 0;
 
   @override
@@ -172,11 +171,6 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
                         _pageCount = details.document.pages.count;
                       });
                     },
-                    onPageChanged: (PdfPageChangedDetails details) {
-                      setState(() {
-                        _currentPage = details.newPageNumber;
-                      });
-                    },
                   )
                 : (widget.filePath != null)
                     ? SfPdfViewer.file(
@@ -185,11 +179,6 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
                         onDocumentLoaded: (PdfDocumentLoadedDetails details) {
                           setState(() {
                             _pageCount = details.document.pages.count;
-                          });
-                        },
-                        onPageChanged: (PdfPageChangedDetails details) {
-                          setState(() {
-                            _currentPage = details.newPageNumber;
                           });
                         },
                       )

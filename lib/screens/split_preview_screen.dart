@@ -67,7 +67,7 @@ class _SplitPreviewScreenState extends State<SplitPreviewScreen> with Processing
     return PdfViewerScaffold(
       title: 'Split PDF',
       filePath: widget.file.path,
-      fileBytes: widget.file.bytes,
+      fileBytes: kIsWeb ? widget.file.bytes : null,
       bottomActionWidget: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

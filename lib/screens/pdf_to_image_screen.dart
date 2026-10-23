@@ -136,7 +136,7 @@ class _PdfToImageScreenState extends State<PdfToImageScreen> with ProcessingStat
     return PdfViewerScaffold(
       title: 'Export PDF to Image',
       filePath: widget.file.path,
-      fileBytes: widget.file.bytes,
+      fileBytes: kIsWeb ? widget.file.bytes : null,
       bottomActionWidget: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
