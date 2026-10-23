@@ -36,6 +36,8 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
 
   @override
   void dispose() {
+    _pdfViewerController.dispose();
+    _searchResult.clear();
     _searchController.dispose();
     super.dispose();
   }
@@ -167,6 +169,7 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
                     widget.fileBytes!,
                     controller: _pdfViewerController,
                     onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+                      if (!mounted) return;
                       setState(() {
                         _pageCount = details.document.pages.count;
                       });
@@ -177,6 +180,7 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
                         File(widget.filePath!),
                         controller: _pdfViewerController,
                         onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+                          if (!mounted) return;
                           setState(() {
                             _pageCount = details.document.pages.count;
                           });

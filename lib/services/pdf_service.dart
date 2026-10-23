@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
@@ -59,8 +60,7 @@ class PdfService {
     }
   }
 
-  /// Splits a PDF by extracting specific pages.
-  static Future<Uint8List?> splitPdf(dynamic fileInput, List<int> pagesToExtract) async {
+  static Future<Uint8List?> _splitPdfImpl(dynamic fileInput, List<int> pagesToExtract) async {
     try {
       PdfDocument document;
       if (kIsWeb) {
@@ -87,8 +87,13 @@ class PdfService {
     }
   }
 
-  /// Compresses a PDF to reduce its file size.
-  static Future<Uint8List?> compressPdf(dynamic fileInput) async {
+  /// Splits a PDF by extracting specific pages.
+  static Future<Uint8List?> splitPdf(dynamic fileInput, List<int> pagesToExtract) async {
+    if (kIsWeb) return _splitPdfImpl(fileInput, pagesToExtract);
+    return Isolate.run(() => _splitPdfImpl(fileInput, pagesToExtract));
+  }
+
+  static Future<Uint8List?> _compressPdfImpl(dynamic fileInput) async {
     try {
       PdfDocument document;
       if (kIsWeb) {
@@ -114,8 +119,13 @@ class PdfService {
     }
   }
 
-  /// Converts a list of images into a single PDF document.
-  static Future<Uint8List?> imagesToPdf(List<dynamic> imageInputs) async {
+  /// Compresses a PDF to reduce its file size.
+  static Future<Uint8List?> compressPdf(dynamic fileInput) async {
+    if (kIsWeb) return _compressPdfImpl(fileInput);
+    return Isolate.run(() => _compressPdfImpl(fileInput));
+  }
+
+  static Future<Uint8List?> _imagesToPdfImpl(List<dynamic> imageInputs) async {
     try {
       final PdfDocument document = PdfDocument();
       document.pageSettings.margins.all = 0;
@@ -162,6 +172,12 @@ class PdfService {
       debugPrint('Error converting images to PDF: $e');
       return null;
     }
+  }
+
+  /// Converts a list of images into a single PDF document.
+  static Future<Uint8List?> imagesToPdf(List<dynamic> imageInputs) async {
+    if (kIsWeb) return _imagesToPdfImpl(imageInputs);
+    return Isolate.run(() => _imagesToPdfImpl(imageInputs));
   }
 
   /// Extracts pages from a PDF as images.
@@ -276,8 +292,7 @@ class PdfService {
     }
   }
 
-  /// Reorders pages in the PDF according to newOrder (list of 0-based indices).
-  static Future<Uint8List?> reorderPages(dynamic fileInput, List<int> newOrder) async {
+  static Future<Uint8List?> _reorderPagesImpl(dynamic fileInput, List<int> newOrder) async {
     try {
       PdfDocument document;
       if (kIsWeb) {
@@ -309,8 +324,13 @@ class PdfService {
     }
   }
 
-  /// Rotates specific pages in the PDF. rotations maps page index to angle (90, 180, 270).
-  static Future<Uint8List?> rotatePages(dynamic fileInput, Map<int, int> rotations) async {
+  /// Reorders pages in the PDF according to newOrder (list of 0-based indices).
+  static Future<Uint8List?> reorderPages(dynamic fileInput, List<int> newOrder) async {
+    if (kIsWeb) return _reorderPagesImpl(fileInput, newOrder);
+    return Isolate.run(() => _reorderPagesImpl(fileInput, newOrder));
+  }
+
+  static Future<Uint8List?> _rotatePagesImpl(dynamic fileInput, Map<int, int> rotations) async {
     try {
       PdfDocument document;
       if (kIsWeb) {
@@ -341,8 +361,13 @@ class PdfService {
     }
   }
 
-  /// Adds a watermark text, optionally adds page numbers to the footer.
-  static Future<Uint8List?> addWatermarkAndPageNumbers(dynamic fileInput, {String? watermarkText, bool diagonal = true, bool addPageNumbers = false, List<int>? pages}) async {
+  /// Rotates specific pages in the PDF. rotations maps page index to angle (90, 180, 270).
+  static Future<Uint8List?> rotatePages(dynamic fileInput, Map<int, int> rotations) async {
+    if (kIsWeb) return _rotatePagesImpl(fileInput, rotations);
+    return Isolate.run(() => _rotatePagesImpl(fileInput, rotations));
+  }
+
+  static Future<Uint8List?> _addWatermarkAndPageNumbersImpl(dynamic fileInput, {String? watermarkText, bool diagonal = true, bool addPageNumbers = false, List<int>? pages}) async {
     try {
       PdfDocument document;
       if (kIsWeb) {
@@ -397,8 +422,13 @@ class PdfService {
     }
   }
 
-  /// Encrypts the PDF with a password using AES 256.
-  static Future<Uint8List?> protectPdf(dynamic fileInput, String password) async {
+  /// Adds a watermark text, optionally adds page numbers to the footer.
+  static Future<Uint8List?> addWatermarkAndPageNumbers(dynamic fileInput, {String? watermarkText, bool diagonal = true, bool addPageNumbers = false, List<int>? pages}) async {
+    if (kIsWeb) return _addWatermarkAndPageNumbersImpl(fileInput, watermarkText: watermarkText, diagonal: diagonal, addPageNumbers: addPageNumbers, pages: pages);
+    return Isolate.run(() => _addWatermarkAndPageNumbersImpl(fileInput, watermarkText: watermarkText, diagonal: diagonal, addPageNumbers: addPageNumbers, pages: pages));
+  }
+
+  static Future<Uint8List?> _protectPdfImpl(dynamic fileInput, String password) async {
     try {
       PdfDocument document;
       if (kIsWeb) {
@@ -422,8 +452,13 @@ class PdfService {
     }
   }
 
-  /// Removes encryption from a PDF by providing the current password.
-  static Future<Uint8List?> unlockPdf(dynamic fileInput, String password) async {
+  /// Encrypts the PDF with a password using AES 256.
+  static Future<Uint8List?> protectPdf(dynamic fileInput, String password) async {
+    if (kIsWeb) return _protectPdfImpl(fileInput, password);
+    return Isolate.run(() => _protectPdfImpl(fileInput, password));
+  }
+
+  static Future<Uint8List?> _unlockPdfImpl(dynamic fileInput, String password) async {
     try {
       PdfDocument document;
       if (kIsWeb) {
@@ -454,7 +489,13 @@ class PdfService {
     }
   }
 
-  static Future<Uint8List?> addSignature(dynamic fileInput, int pageIndex, Uint8List signatureBytes, {required double xFraction, required double yFraction, required double widthFraction, required double rotationDegrees}) async {
+  /// Removes encryption from a PDF by providing the current password.
+  static Future<Uint8List?> unlockPdf(dynamic fileInput, String password) async {
+    if (kIsWeb) return _unlockPdfImpl(fileInput, password);
+    return Isolate.run(() => _unlockPdfImpl(fileInput, password));
+  }
+
+  static Future<Uint8List?> _addSignatureImpl(dynamic fileInput, int pageIndex, Uint8List signatureBytes, {required double xFraction, required double yFraction, required double widthFraction, required double rotationDegrees}) async {
     try {
       PdfDocument document;
       if (kIsWeb) {
@@ -492,8 +533,12 @@ class PdfService {
     }
   }
 
-  /// Extracts textual content from the entire PDF document.
-  static Future<String?> extractText(dynamic fileInput) async {
+  static Future<Uint8List?> addSignature(dynamic fileInput, int pageIndex, Uint8List signatureBytes, {required double xFraction, required double yFraction, required double widthFraction, required double rotationDegrees}) async {
+    if (kIsWeb) return _addSignatureImpl(fileInput, pageIndex, signatureBytes, xFraction: xFraction, yFraction: yFraction, widthFraction: widthFraction, rotationDegrees: rotationDegrees);
+    return Isolate.run(() => _addSignatureImpl(fileInput, pageIndex, signatureBytes, xFraction: xFraction, yFraction: yFraction, widthFraction: widthFraction, rotationDegrees: rotationDegrees));
+  }
+
+  static Future<String?> _extractTextImpl(dynamic fileInput) async {
     try {
       PdfDocument document;
       if (kIsWeb) {
@@ -522,5 +567,11 @@ class PdfService {
       debugPrint('Error extracting text: $e');
       return null;
     }
+  }
+
+  /// Extracts textual content from the entire PDF document.
+  static Future<String?> extractText(dynamic fileInput) async {
+    if (kIsWeb) return _extractTextImpl(fileInput);
+    return Isolate.run(() => _extractTextImpl(fileInput));
   }
 }

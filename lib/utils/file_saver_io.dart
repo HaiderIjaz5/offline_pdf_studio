@@ -1,9 +1,26 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'dart:typed_data';
+
+/// Helper class for passing arguments to the background zip isolate.
+class _ZipArgs {
+  final List<List<int>> filesBytes;
+  final List<String> fileNames;
+  const _ZipArgs(this.filesBytes, this.fileNames);
+}
+
+/// Top-level function: builds and encodes a zip archive. Runs via compute().
+Uint8List _encodeZip(_ZipArgs args) {
+  final archive = Archive();
+  for (int i = 0; i < args.filesBytes.length; i++) {
+    archive.addFile(ArchiveFile(args.fileNames[i], args.filesBytes[i].length, args.filesBytes[i]));
+  }
+  return ZipEncoder().encode(archive);
+}
 
 Future<String?> saveFileImpl(List<int> bytes, String fileName) async {
   String? outputFile = await FilePicker.saveFile(
@@ -29,12 +46,7 @@ Future<String?> saveFileImpl(List<int> bytes, String fileName) async {
 
 Future<String?> saveMultipleFilesImpl(List<List<int>> filesBytes, List<String> fileNames, String zipName) async {
   
-  final archive = Archive();
-  for (int i = 0; i < filesBytes.length; i++) {
-    final archiveFile = ArchiveFile(fileNames[i], filesBytes[i].length, filesBytes[i]);
-    archive.addFile(archiveFile);
-  }
-  final zipData = ZipEncoder().encode(archive);
+  final zipData = await compute(_encodeZip, _ZipArgs(filesBytes, fileNames));
 
   String? outputFile = await FilePicker.saveFile(
     dialogTitle: 'Save Your Images ZIP',

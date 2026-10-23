@@ -51,8 +51,13 @@ class SettingsService {
     });
     
     recents.removeWhere((item) {
-      final decoded = jsonDecode(item);
-      return decoded['path'] == path;
+      try {
+        final decoded = jsonDecode(item);
+        if (decoded is! Map || decoded['path'] is! String) return false;
+        return decoded['path'] == path;
+      } catch (_) {
+        return false;
+      }
     });
     
     recents.insert(0, newEntry);
@@ -72,11 +77,17 @@ class SettingsService {
     final validParsed = <Map<String, dynamic>>[];
     
     for (final item in recents) {
-      final decoded = jsonDecode(item) as Map<String, dynamic>;
-      final path = (decoded['path'] as String).toLowerCase();
-      if (path.endsWith('.pdf') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.zip')) {
-        validRecents.add(item);
-        validParsed.add(decoded);
+      try {
+        final decoded = jsonDecode(item);
+        if (decoded is! Map || decoded['path'] is! String) continue;
+        final path = (decoded['path'] as String).toLowerCase();
+        if (path.endsWith('.pdf') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.zip')) {
+          validRecents.add(item);
+          validParsed.add(Map<String, dynamic>.from(decoded));
+        }
+      } catch (_) {
+        // skip corrupted entry; self-heals by not adding to validRecents
+        continue;
       }
     }
     
@@ -91,8 +102,13 @@ class SettingsService {
     final prefs = await _prefs;
     List<String> recents = prefs.getStringList(_keyRecentFiles) ?? [];
     recents.removeWhere((item) {
-      final decoded = jsonDecode(item);
-      return decoded['path'] == path;
+      try {
+        final decoded = jsonDecode(item);
+        if (decoded is! Map || decoded['path'] is! String) return false;
+        return decoded['path'] == path;
+      } catch (_) {
+        return false;
+      }
     });
     await prefs.setStringList(_keyRecentFiles, recents);
     try {

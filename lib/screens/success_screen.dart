@@ -11,6 +11,16 @@ import 'package:archive/archive.dart';
 import 'pdf_viewer_screen.dart';
 import 'package:path/path.dart' as p;
 
+/// Top-level helper: builds a ZIP archive from image bytes.
+/// Runs in a background isolate via compute().
+Uint8List? _encodeImagesZip(List<Uint8List> files) {
+  final archive = Archive();
+  for (int i = 0; i < files.length; i++) {
+    archive.addFile(ArchiveFile('page_${i + 1}.png', files[i].length, files[i]));
+  }
+  return ZipEncoder().encode(archive);
+}
+
 class SuccessScreen extends StatefulWidget {
   final String filePath;
   final String? fileName;
@@ -77,11 +87,7 @@ class _SuccessScreenState extends State<SuccessScreen> {
         if (widget.fileBytes != null) {
           internalPath = await FileSaver.saveAppCopy(widget.fileBytes!, name);
         } else if (widget.multiFileBytes != null) {
-          final archive = Archive();
-          for (int i = 0; i < widget.multiFileBytes!.length; i++) {
-            archive.addFile(ArchiveFile('page_${i+1}.png', widget.multiFileBytes![i].length, widget.multiFileBytes![i]));
-          }
-          final zipData = ZipEncoder().encode(archive);
+          final zipData = await compute(_encodeImagesZip, widget.multiFileBytes!);
           if (zipData != null) {
             internalPath = await FileSaver.saveAppCopy(zipData, name);
           }
@@ -252,7 +258,7 @@ class _SuccessScreenState extends State<SuccessScreen> {
                                           context,
                                           MaterialPageRoute(
                                             builder: (_) => PdfViewerScreen(
-                                              fileBytes: widget.fileBytes,
+                                              fileBytes: kIsWeb ? widget.fileBytes : null,
                                               filePath: _internalPath ?? widget.filePath,
                                             ),
                                           ),
