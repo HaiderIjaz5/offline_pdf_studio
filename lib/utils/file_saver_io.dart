@@ -19,7 +19,8 @@ Uint8List _encodeZip(_ZipArgs args) {
   for (int i = 0; i < args.filesBytes.length; i++) {
     archive.addFile(ArchiveFile(args.fileNames[i], args.filesBytes[i].length, args.filesBytes[i]));
   }
-  return ZipEncoder().encode(archive);
+  final encoded = ZipEncoder().encode(archive);
+  return Uint8List.fromList(encoded ?? []);
 }
 
 Future<String?> saveFileImpl(List<int> bytes, String fileName) async {

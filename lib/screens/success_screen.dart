@@ -18,7 +18,8 @@ Uint8List? _encodeImagesZip(List<Uint8List> files) {
   for (int i = 0; i < files.length; i++) {
     archive.addFile(ArchiveFile('page_${i + 1}.png', files[i].length, files[i]));
   }
-  return ZipEncoder().encode(archive);
+  final encoded = ZipEncoder().encode(archive);
+  return encoded != null ? Uint8List.fromList(encoded) : null;
 }
 
 class SuccessScreen extends StatefulWidget {
