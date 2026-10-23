@@ -89,7 +89,7 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
         onViewerReady: (document, controller) {
           if (!mounted) return;
           setState(() {
-            _pageCount = document.pagesCount;
+            _pageCount = document.pages.length;
           });
         },
       );
