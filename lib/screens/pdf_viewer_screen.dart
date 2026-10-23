@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import '../widgets/pdf_viewer_scaffold.dart';
 
 class PdfViewerScreen extends StatelessWidget {
@@ -16,8 +17,9 @@ class PdfViewerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final title = filePath != null ? p.basename(filePath!) : 'PDF Viewer';
     return PdfViewerScaffold(
-      title: 'PDF Viewer',
+      title: title,
       filePath: filePath,
       fileBytes: fileBytes,
       openedFromIntent: openedFromIntent,

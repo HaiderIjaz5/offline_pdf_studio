@@ -1,8 +1,7 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:pdfrx/pdfrx.dart';
 import 'package:share_plus/share_plus.dart';
 import 'ad_banner.dart';
 
@@ -27,23 +26,84 @@ class PdfViewerScaffold extends StatefulWidget {
 }
 
 class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
-  final PdfViewerController _pdfViewerController = PdfViewerController();
-  PdfTextSearchResult _searchResult = PdfTextSearchResult();
+  final PdfViewerController _controller = PdfViewerController();
+  late final PdfTextSearcher _textSearcher = PdfTextSearcher(_controller);
+
   bool _isSearching = false;
+  bool _hasSearched = false;
   final TextEditingController _searchController = TextEditingController();
-  
+
   int _pageCount = 0;
+
+  void _onSearchUpdate() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _textSearcher.addListener(_onSearchUpdate);
+  }
 
   @override
   void dispose() {
-    _pdfViewerController.dispose();
-    _searchResult.clear();
+    _textSearcher.removeListener(_onSearchUpdate);
+    _textSearcher.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
+  /// Shows a password dialog and returns the entered password, or null on cancel.
+  Future<String?> _askForPassword() async {
+    if (!mounted) return null;
+    final passwordCtrl = TextEditingController();
+    final result = await showDialog<String?>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Password Required'),
+        content: TextField(
+          controller: passwordCtrl,
+          obscureText: true,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Enter PDF password'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(null),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(passwordCtrl.text),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    passwordCtrl.dispose();
+    return result;
+  }
+
+  PdfViewerParams get _params => PdfViewerParams(
+        pagePaintCallbacks: [_textSearcher.pageTextMatchPaintCallback],
+        onViewerReady: (document, controller) {
+          if (!mounted) return;
+          setState(() {
+            _pageCount = document.pagesCount;
+          });
+        },
+        passwordProvider: _askForPassword,
+      );
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // Match counter values
+    final int totalMatches = _textSearcher.matches.length;
+    final int currentMatch =
+        totalMatches == 0 ? 0 : (_textSearcher.currentIndex ?? 0) + 1;
+
     return PopScope(
       canPop: !widget.openedFromIntent,
       onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -55,143 +115,155 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
         }
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
-                decoration: InputDecoration(
-                  hintText: 'Search...',
-                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.54)),
-                  border: InputBorder.none,
-                ),
-                onSubmitted: (String value) {
-                  _searchResult = _pdfViewerController.searchText(value);
-                  setState(() {});
-                },
-              )
-            : Text(
-                widget.title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 20,
-                  letterSpacing: -0.5,
-                ),
-              ),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        leading: widget.openedFromIntent
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => SystemNavigator.pop(),
-              )
-            : null,
-        actions: [
-          if (_isSearching) ...[
-            IconButton(
-              icon: const Icon(Icons.clear),
-              onPressed: () {
-                _searchController.clear();
-                _searchResult.clear();
-                setState(() {
-                  _isSearching = false;
-                });
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.keyboard_arrow_up),
-              onPressed: () {
-                _searchResult.previousInstance();
-                setState(() {});
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.keyboard_arrow_down),
-              onPressed: () {
-                _searchResult.nextInstance();
-                setState(() {});
-              },
-            ),
-          ] else ...[
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                setState(() {
-                  _isSearching = true;
-                });
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.zoom_out),
-              onPressed: () {
-                if (_pdfViewerController.zoomLevel > 1.0) {
-                  _pdfViewerController.zoomLevel = _pdfViewerController.zoomLevel - 0.5;
-                }
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.zoom_in),
-              onPressed: () {
-                _pdfViewerController.zoomLevel = _pdfViewerController.zoomLevel + 0.5;
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.share),
-              onPressed: (_pageCount > 0 && widget.filePath != null && !kIsWeb) 
-                  ? () {
-                      String mimeType = '*/*';
-                      final lower = widget.filePath!.toLowerCase();
-                      if (lower.endsWith('.pdf')) {
-                        mimeType = 'application/pdf';
-                      } else if (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
-                        mimeType = 'image/*';
-                      } else if (lower.endsWith('.zip')) {
-                        mimeType = 'application/zip';
-                      }
-                      Share.shareXFiles([XFile(widget.filePath!, mimeType: mimeType)]);
-                    }
-                  : null,
-            ),
-            const SizedBox(width: 8),
-          ],
-        ],
-      ),
-      body: Column(
-        children: [
-          const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
-          Expanded(
-            child: (widget.fileBytes != null)
-                ? SfPdfViewer.memory(
-                    widget.fileBytes!,
-                    controller: _pdfViewerController,
-                    onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-                      if (!mounted) return;
+        backgroundColor: colorScheme.surface,
+        appBar: AppBar(
+          title: _isSearching
+              ? TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  style: TextStyle(color: colorScheme.onSurface, fontSize: 18),
+                  decoration: InputDecoration(
+                    hintText: 'Search...',
+                    hintStyle: TextStyle(
+                        color: colorScheme.onSurface.withOpacity(0.54)),
+                    border: InputBorder.none,
+                  ),
+                  onSubmitted: (String value) {
+                    if (value.isNotEmpty) {
+                      _textSearcher.startTextSearch(value,
+                          caseInsensitive: true);
                       setState(() {
-                        _pageCount = details.document.pages.count;
+                        _hasSearched = true;
                       });
-                    },
-                  )
-                : (widget.filePath != null)
-                    ? SfPdfViewer.file(
-                        File(widget.filePath!),
-                        controller: _pdfViewerController,
-                        onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-                          if (!mounted) return;
-                          setState(() {
-                            _pageCount = details.document.pages.count;
-                          });
-                        },
-                      )
-                    : const Center(child: Text('Invalid PDF Source')),
-          ),
-          if (widget.bottomActionWidget != null) widget.bottomActionWidget!,
-          const AdBannerWidget(),
-        ],
-      ),
+                    }
+                  },
+                )
+              : Text(
+                  widget.title,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+          backgroundColor: colorScheme.surface,
+          foregroundColor: colorScheme.onSurface,
+          elevation: 0,
+          scrolledUnderElevation: 1,
+          leading: widget.openedFromIntent
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => SystemNavigator.pop(),
+                )
+              : null,
+          actions: [
+            if (_isSearching) ...[
+              if (_hasSearched)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: Center(
+                    child: Text(
+                      '$currentMatch / $totalMatches',
+                      style: TextStyle(
+                          fontSize: 14, color: colorScheme.onSurface),
+                    ),
+                  ),
+                ),
+              IconButton(
+                icon: const Icon(Icons.keyboard_arrow_up),
+                onPressed: () {
+                  _textSearcher.goToPrevMatch();
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.keyboard_arrow_down),
+                onPressed: () {
+                  _textSearcher.goToNextMatch();
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  _searchController.clear();
+                  _textSearcher.resetTextSearch();
+                  setState(() {
+                    _isSearching = false;
+                    _hasSearched = false;
+                  });
+                },
+              ),
+            ] else ...[
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = true;
+                  });
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.zoom_out),
+                onPressed: () {
+                  _controller.zoomDown();
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.zoom_in),
+                onPressed: () {
+                  _controller.zoomUp();
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.share),
+                onPressed: (_pageCount > 0 &&
+                        widget.filePath != null &&
+                        !kIsWeb)
+                    ? () {
+                        String mimeType = '*/*';
+                        final lower = widget.filePath!.toLowerCase();
+                        if (lower.endsWith('.pdf')) {
+                          mimeType = 'application/pdf';
+                        } else if (lower.endsWith('.png') ||
+                            lower.endsWith('.jpg') ||
+                            lower.endsWith('.jpeg')) {
+                          mimeType = 'image/*';
+                        } else if (lower.endsWith('.zip')) {
+                          mimeType = 'application/zip';
+                        }
+                        Share.shareXFiles(
+                            [XFile(widget.filePath!, mimeType: mimeType)]);
+                      }
+                    : null,
+              ),
+              const SizedBox(width: 8),
+            ],
+          ],
+        ),
+        body: Column(
+          children: [
+            const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
+            Expanded(
+              child: (widget.fileBytes != null)
+                  ? PdfViewer.data(
+                      widget.fileBytes!,
+                      sourceName: widget.title,
+                      controller: _controller,
+                      params: _params,
+                    )
+                  : (widget.filePath != null)
+                      ? PdfViewer.file(
+                          widget.filePath!,
+                          controller: _controller,
+                          params: _params,
+                        )
+                      : const Center(child: Text('Invalid PDF Source')),
+            ),
+            if (widget.bottomActionWidget != null) widget.bottomActionWidget!,
+            const AdBannerWidget(),
+          ],
+        ),
       ),
     );
   }

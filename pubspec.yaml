@@ -41,7 +41,8 @@ dependencies:
   google_mobile_ads: any
   image: any
   web: any
-  syncfusion_flutter_pdfviewer: any
+  pdfrx: any
+  path: any
   pdfx: any
   archive: any
   receive_sharing_intent: 1.8.0
