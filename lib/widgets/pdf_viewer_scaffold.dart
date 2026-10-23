@@ -92,7 +92,6 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
             _pageCount = document.pagesCount;
           });
         },
-        passwordProvider: _askForPassword,
       );
 
   @override
@@ -249,12 +248,14 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
                   ? PdfViewer.data(
                       widget.fileBytes!,
                       sourceName: widget.title,
+                      passwordProvider: _askForPassword,
                       controller: _controller,
                       params: _params,
                     )
                   : (widget.filePath != null)
                       ? PdfViewer.file(
                           widget.filePath!,
+                          passwordProvider: _askForPassword,
                           controller: _controller,
                           params: _params,
                         )
