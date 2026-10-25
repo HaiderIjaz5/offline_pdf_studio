@@ -34,6 +34,7 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
   final TextEditingController _searchController = TextEditingController();
 
   int _pageCount = 0;
+  late final PdfViewerParams _params;
 
   void _onSearchUpdate() {
     if (mounted) setState(() {});
@@ -42,6 +43,18 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
   @override
   void initState() {
     super.initState();
+    _params = PdfViewerParams(
+      pagePaintCallbacks: [_textSearcher.pageTextMatchPaintCallback],
+      onViewerReady: (document, controller) {
+        if (!mounted) return;
+        final count = document.pages.length;
+        if (count != _pageCount) {
+          setState(() {
+            _pageCount = count;
+          });
+        }
+      },
+    );
     _textSearcher.addListener(_onSearchUpdate);
   }
 
@@ -84,15 +97,6 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
     return result;
   }
 
-  PdfViewerParams get _params => PdfViewerParams(
-        pagePaintCallbacks: [_textSearcher.pageTextMatchPaintCallback],
-        onViewerReady: (document, controller) {
-          if (!mounted) return;
-          setState(() {
-            _pageCount = document.pages.length;
-          });
-        },
-      );
 
   @override
   Widget build(BuildContext context) {

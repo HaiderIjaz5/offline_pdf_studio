@@ -18,6 +18,21 @@ void main() async {
     unawaited(MobileAds.instance.initialize());
   }
 
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Material(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            details.exceptionAsString(),
+            style: const TextStyle(color: Colors.red, fontSize: 14),
+          ),
+        ),
+      ),
+    );
+  };
+
   final String savedTheme = await SettingsService.getThemeMode();
   if (savedTheme == 'light') themeNotifier.value = ThemeMode.light;
   else if (savedTheme == 'dark') themeNotifier.value = ThemeMode.dark;
