@@ -27,7 +27,7 @@ class PdfViewerScaffold extends StatefulWidget {
 
 class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
   final PdfViewerController _controller = PdfViewerController();
-  late final PdfTextSearcher _textSearcher = PdfTextSearcher(_controller);
+  PdfTextSearcher? _textSearcher;
 
   bool _isSearching = false;
   bool _hasSearched = false;
@@ -44,26 +44,30 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
   void initState() {
     super.initState();
     _params = PdfViewerParams(
-      pagePaintCallbacks: [_textSearcher.pageTextMatchPaintCallback],
+      pagePaintCallbacks: [_paintMatches],
       onViewerReady: (document, controller) {
         if (!mounted) return;
-        final count = document.pages.length;
-        if (count != _pageCount) {
-          setState(() {
-            _pageCount = count;
-          });
-        }
+        _textSearcher?.removeListener(_onSearchUpdate);
+        _textSearcher?.dispose();
+        _textSearcher = PdfTextSearcher(controller);
+        _textSearcher!.addListener(_onSearchUpdate);
+        setState(() {
+          _pageCount = document.pages.length;
+        });
       },
     );
-    _textSearcher.addListener(_onSearchUpdate);
   }
 
   @override
   void dispose() {
-    _textSearcher.removeListener(_onSearchUpdate);
-    _textSearcher.dispose();
+    _textSearcher?.removeListener(_onSearchUpdate);
+    _textSearcher?.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _paintMatches(Canvas canvas, Rect pageRect, PdfPage page) {
+    _textSearcher?.pageTextMatchPaintCallback(canvas, pageRect, page);
   }
 
   /// Shows a password dialog and returns the entered password, or null on cancel.
@@ -103,9 +107,9 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
     final colorScheme = Theme.of(context).colorScheme;
 
     // Match counter values
-    final int totalMatches = _textSearcher.matches.length;
+    final int totalMatches = _textSearcher?.matches.length ?? 0;
     final int currentMatch =
-        totalMatches == 0 ? 0 : (_textSearcher.currentIndex ?? 0) + 1;
+        totalMatches == 0 ? 0 : ((_textSearcher?.currentIndex ?? 0) + 1);
 
     return PopScope(
       canPop: !widget.openedFromIntent,
@@ -133,7 +137,7 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
                   ),
                   onSubmitted: (String value) {
                     if (value.isNotEmpty) {
-                      _textSearcher.startTextSearch(value,
+                      _textSearcher?.startTextSearch(value,
                           caseInsensitive: true);
                       setState(() {
                         _hasSearched = true;
@@ -177,20 +181,20 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
               IconButton(
                 icon: const Icon(Icons.keyboard_arrow_up),
                 onPressed: () {
-                  _textSearcher.goToPrevMatch();
+                  _textSearcher?.goToPrevMatch();
                 },
               ),
               IconButton(
                 icon: const Icon(Icons.keyboard_arrow_down),
                 onPressed: () {
-                  _textSearcher.goToNextMatch();
+                  _textSearcher?.goToNextMatch();
                 },
               ),
               IconButton(
                 icon: const Icon(Icons.clear),
                 onPressed: () {
                   _searchController.clear();
-                  _textSearcher.resetTextSearch();
+                  _textSearcher?.resetTextSearch();
                   setState(() {
                     _isSearching = false;
                     _hasSearched = false;
