@@ -23,10 +23,12 @@ void main() async {
       textDirection: TextDirection.ltr,
       child: Material(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
           child: Text(
-            details.exceptionAsString(),
-            style: const TextStyle(color: Colors.red, fontSize: 14),
+            details.exceptionAsString() +
+                '\n\n' +
+                (details.stack?.toString() ?? 'no stack'),
+            style: const TextStyle(color: Colors.red, fontSize: 13),
           ),
         ),
       ),
