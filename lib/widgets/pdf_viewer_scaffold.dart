@@ -117,6 +117,9 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final bool isLandscape =
+    MediaQuery.of(context).orientation == Orientation.landscape;
+
 
     // Match counter values
     final int totalMatches = _textSearcher?.matches.length ?? 0;
@@ -276,7 +279,8 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
         ),
         body: Column(
           children: [
-            const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
+            if (!isLandscape)
+              const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
             Expanded(
                               child: Stack(
                                 children: [
@@ -322,7 +326,8 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
                             ),
 
             if (widget.bottomActionWidget != null) widget.bottomActionWidget!,
-            const AdBannerWidget(),
+            if (!isLandscape) const AdBannerWidget(),
+
           ],
         ),
       ),
