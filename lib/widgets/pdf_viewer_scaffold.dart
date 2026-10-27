@@ -34,6 +34,7 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
   final TextEditingController _searchController = TextEditingController();
 
   int _pageCount = 0;
+  int _currentPage = 1;
   late final PdfViewerParams _params;
 
   void _onSearchUpdate() {
@@ -44,7 +45,18 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
   void initState() {
     super.initState();
     _params = PdfViewerParams(
+      margin: 0,
+      pageDropShadow: null,
       pagePaintCallbacks: [_paintMatches],
+      onPageChanged: (pageNumber) {
+        if (!mounted) return;
+        final p = pageNumber;
+        if (p != null && p != _currentPage) {
+          setState(() {
+            _currentPage = p;
+          });
+        }
+  },
       onViewerReady: (document, controller) {
         if (!mounted) return;
         _textSearcher?.removeListener(_onSearchUpdate);
@@ -168,16 +180,30 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
           actions: [
             if (_isSearching) ...[
               if (_hasSearched)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  child: Center(
-                    child: Text(
-                      '$currentMatch / $totalMatches',
-                      style: TextStyle(
-                          fontSize: 14, color: colorScheme.onSurface),
-                    ),
-                  ),
-                ),
+  if ((_textSearcher?.isSearching ?? false) &&
+      totalMatches == 0)
+    const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4.0),
+      child: Center(
+        child: SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+    )
+  else
+    Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: Center(
+        child: Text(
+          '$currentMatch / $totalMatches',
+          style: TextStyle(
+              fontSize: 14, color: colorScheme.onSurface),
+        ),
+      ),
+    ),
+
               IconButton(
                 icon: const Icon(Icons.keyboard_arrow_up),
                 onPressed: () {
@@ -252,23 +278,50 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
           children: [
             const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
             Expanded(
-              child: (widget.fileBytes != null)
-                  ? PdfViewer.data(
-                      widget.fileBytes!,
-                      sourceName: widget.title,
-                      passwordProvider: _askForPassword,
-                      controller: _controller,
-                      params: _params,
-                    )
-                  : (widget.filePath != null)
-                      ? PdfViewer.file(
-                          widget.filePath!,
-                          passwordProvider: _askForPassword,
-                          controller: _controller,
-                          params: _params,
-                        )
-                      : const Center(child: Text('Invalid PDF Source')),
-            ),
+            Expanded(
+                              child: Stack(
+                                children: [
+                                  (widget.fileBytes != null)
+                                      ? PdfViewer.data(
+                                          widget.fileBytes!,
+                                          sourceName: widget.title,
+                                          passwordProvider: _askForPassword,
+                                          controller: _controller,
+                                          params: _params,
+                                        )
+                                      : (widget.filePath != null)
+                                          ? PdfViewer.file(
+                                              widget.filePath!,
+                                              passwordProvider: _askForPassword,
+                                              controller: _controller,
+                                              params: _params,
+                                            )
+                                          : const Center(child: Text('Invalid PDF Source')),
+                                  if (_pageCount > 0)
+                                    Positioned(
+                                      left: 0,
+                                      right: 0,
+                                      bottom: 8,
+                                      child: Center(
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black54,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Text(
+                                            '$_currentPage / $_pageCount',
+                                            style: const TextStyle(
+                                                color: Colors.white, fontSize: 13),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+
             if (widget.bottomActionWidget != null) widget.bottomActionWidget!,
             const AdBannerWidget(),
           ],

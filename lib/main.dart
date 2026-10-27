@@ -18,22 +18,7 @@ void main() async {
     unawaited(MobileAds.instance.initialize());
   }
 
-  ErrorWidget.builder = (FlutterErrorDetails details) {
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Material(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
-          child: Text(
-            details.exceptionAsString() +
-                '\n\n' +
-                (details.stack?.toString() ?? 'no stack'),
-            style: const TextStyle(color: Colors.red, fontSize: 13),
-          ),
-        ),
-      ),
-    );
-  };
+
 
   final String savedTheme = await SettingsService.getThemeMode();
   if (savedTheme == 'light') themeNotifier.value = ThemeMode.light;
