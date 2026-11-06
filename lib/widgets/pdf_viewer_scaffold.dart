@@ -342,7 +342,7 @@ void _onBadgeDragUpdate(DragUpdateDetails details) {
                                               params: _params,
                                             )
                                                   : const Center(child: Text('Invalid PDF Source')),
-                                        if (_pageCount > 1)
+                                       if (_pageCount > 1)
   Positioned(
     right: 4,
     top: 0,
@@ -383,44 +383,26 @@ void _onBadgeDragUpdate(DragUpdateDetails details) {
     ),
   ),
 
-if (_pageCount > 1)
+
+if (_pageCount > 0)
   Positioned(
-    right: 4,
-    top: 0,
-    bottom: 0,
-    child: ValueListenableBuilder<Matrix4>(
-      valueListenable: _controller,
-      builder: (context, _, __) {
-        return Align(
-          alignment: Alignment(
-              1.0,
-              -1 + 2 * _scrollFraction()),
-          child: GestureDetector(
-            onVerticalDragUpdate:
-                _onBadgeDragUpdate,
-            child: Container(
-              padding: const EdgeInsets
-                  .symmetric(
-                      horizontal: 10,
-                      vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius:
-                    BorderRadius.circular(
-                        14),
-              ),
-              child: Text(
-                '$_currentPage / $_pageCount',
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight:
-                        FontWeight.w700),
-              ),
-            ),
-          ),
-        );
-      },
+    left: 0,
+    right: 0,
+    bottom: 8,
+    child: Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.black54,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          '$_currentPage / $_pageCount',
+          style: const TextStyle(
+              color: Colors.white, fontSize: 13),
+        ),
+      ),
     ),
   ),
 
