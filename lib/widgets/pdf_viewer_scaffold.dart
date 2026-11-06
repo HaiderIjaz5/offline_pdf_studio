@@ -45,7 +45,7 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
   void initState() {
     super.initState();
     _params = PdfViewerParams(
-      margin: 0,
+      margin: 5,
       pageDropShadow: null,
       pagePaintCallbacks: [_paintMatches],
       onPageChanged: (pageNumber) {
@@ -299,38 +299,72 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
                                               controller: _controller,
                                               params: _params,
                                             )
-                                          : const Center(child: Text('Invalid PDF Source')),
-                                  if (_pageCount > 0)
-                                    Positioned(
-                                      left: 0,
-                                      right: 0,
-                                      bottom: 8,
-                                      child: Center(
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black54,
-                                            borderRadius: BorderRadius.circular(12),
+                                                  : const Center(child: Text('Invalid PDF Source')),
+                                        if (_pageCount > 1)
+                                          Positioned(
+                                            right: 4,
+                                            top: 0,
+                                            bottom: 0,
+                                            child: Center(
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 4, vertical: 6),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black38,
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                                child: RotatedBox(
+                                                  quarterTurns: 1,
+                                                  child: SizedBox(
+                                                    width: 220,
+                                                    height: 32,
+                                                    child: Slider(
+                                                      value: _currentPage.toDouble(),
+                                                      min: 1,
+                                                      max: _pageCount.toDouble(),
+                                                      divisions: _pageCount - 1,
+                                                      activeColor: Colors.white70,
+                                                      inactiveColor: Colors.white38,
+                                                      thumbColor: Colors.white,
+                                                      onChanged: (double value) {
+                                                        if (!mounted) return;
+                                                        setState(() {
+                                                          _currentPage =
+                                                              value.round();
+                                                        });
+                                                      },
+                                                      onChangeEnd: (double value) {
+                                                        _controller.goToPage(
+                                                            pageNumber:
+                                                                value.round());
+                                                      },
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
                                           ),
-                                          child: Text(
-                                            '$_currentPage / $_pageCount',
-                                            style: const TextStyle(
-                                                color: Colors.white, fontSize: 13),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-
-            if (widget.bottomActionWidget != null) widget.bottomActionWidget!,
-            if (!isLandscape) const AdBannerWidget(),
-
-          ],
+if (_pageCount > 0)
+  Positioned(
+    left: 0,
+    right: 0,
+    bottom: 8,
+    child: Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.black54,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          '$_currentPage / $_pageCount',
+          style: const TextStyle(
+              color: Colors.white, fontSize: 13),
         ),
       ),
-    );
+    ),
+  ),
   }
 }
