@@ -37,10 +37,45 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
   int _currentPage = 1;
   final GlobalKey _stackKey = GlobalKey();
 
-double get _badgeAlignY {
-  if (_pageCount <= 1) return -1;
-  return -1 + 2 * (_currentPage - 1) / (_pageCount - 1);
+double _scrollFraction() {
+  if (!_controller.isReady) return 0;
+  try {
+    final Size doc = _controller.documentSize;
+    final Rect vis = _controller.visibleRect;
+    final double max = doc.height - vis.height;
+    if (max <= 0) return 0;
+    return (vis.top / max).clamp(0.0, 1.0).toDouble();
+  } catch (_) {
+    return 0;
+  }
 }
+
+void _onBadgeDragUpdate(DragUpdateDetails details) {
+  if (!mounted) return;
+  final box =
+      _stackKey.currentContext?.findRenderObject() as RenderBox?;
+  if (box == null) return;
+  final double top = box.localToGlobal(Offset.zero).dy;
+  final double height = box.size.height;
+  if (height <= 0) return;
+  final double fraction =
+      ((details.globalPosition.dy - top) / height)
+          .clamp(0.0, 1.0)
+          .toDouble();
+  if (!_controller.isReady) return;
+  try {
+    final Size doc = _controller.documentSize;
+    final Rect vis = _controller.visibleRect;
+    final double max = doc.height - vis.height;
+    if (max <= 0) return;
+    _controller.goToPosition(
+      documentOffset: Offset(vis.left, fraction * max),
+    );
+  } catch (_) {
+    return;
+  }
+}
+
   late final PdfViewerParams _params;
 
   void _onSearchUpdate() {
@@ -312,70 +347,39 @@ double get _badgeAlignY {
     right: 4,
     top: 0,
     bottom: 0,
-    child: Align(
-      alignment: Alignment(
-          1.0, _badgeAlignY),
-      child: GestureDetector(
-        onVerticalDragUpdate:
-            (details) {
-          if (!mounted) return;
-          final box = _stackKey
-                  .currentContext
-                  ?.findRenderObject()
-              as RenderBox?;
-          if (box == null) return;
-          final double top = box
-              .localToGlobal(
-                  Offset.zero)
-              .dy;
-          final double height =
-              box.size.height;
-          if (height <= 0) return;
-          double fraction =
-              (details.globalPosition
-                          .dy -
-                      top) /
-                  height;
-          fraction = fraction
-              .clamp(0.0, 1.0)
-              .toDouble();
-          final int page = 1 +
-              (fraction *
-                      (_pageCount -
-                          1))
-                  .round();
-          if (page != _currentPage) {
-            setState(() {
-              _currentPage = page;
-            });
-            _controller.goToPage(
-              pageNumber: page,
-              duration:
-                  Duration.zero,
-            );
-          }
-        },
-        child: Container(
-          padding: const EdgeInsets
-              .symmetric(
-                  horizontal: 10,
-                  vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.black54,
-            borderRadius:
-                BorderRadius.circular(
-                    14),
+    child: ValueListenableBuilder<Matrix4>(
+      valueListenable: _controller,
+      builder: (context, _, __) {
+        return Align(
+          alignment: Alignment(
+              1.0,
+              -1 + 2 * _scrollFraction()),
+          child: GestureDetector(
+            onVerticalDragUpdate:
+                _onBadgeDragUpdate,
+            child: Container(
+              padding: const EdgeInsets
+                  .symmetric(
+                      horizontal: 10,
+                      vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius:
+                    BorderRadius.circular(
+                        14),
+              ),
+              child: Text(
+                '$_currentPage / $_pageCount',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight:
+                        FontWeight.w700),
+              ),
+            ),
           ),
-          child: Text(
-            '$_currentPage',
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight:
-                    FontWeight.w700),
-          ),
-        ),
-      ),
+        );
+      },
     ),
   ),
 
