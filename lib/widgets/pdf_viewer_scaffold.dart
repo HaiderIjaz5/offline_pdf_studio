@@ -35,6 +35,12 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
 
   int _pageCount = 0;
   int _currentPage = 1;
+  final GlobalKey _stackKey = GlobalKey();
+
+double get _badgeAlignY {
+  if (_pageCount <= 1) return -1;
+  return -1 + 2 * (_currentPage - 1) / (_pageCount - 1);
+}
   late final PdfViewerParams _params;
 
   void _onSearchUpdate() {
@@ -283,6 +289,7 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
               const AdBannerWidget(adUnitId: 'ca-app-pub-3884228712419530/9931649694'),
             Expanded(
                               child: Stack(
+                                key: _stackKey,
                                 children: [
                                   (widget.fileBytes != null)
                                       ? PdfViewer.data(
@@ -301,50 +308,77 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
                                             )
                                                   : const Center(child: Text('Invalid PDF Source')),
                                         if (_pageCount > 1)
-                                          Positioned(
-                                            right: 4,
-                                            top: 0,
-                                            bottom: 0,
-                                            child: Center(
-                                              child: Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                    horizontal: 4, vertical: 6),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.black38,
-                                                  borderRadius:
-                                                      BorderRadius.circular(20),
-                                                ),
-                                                child: RotatedBox(
-                                                  quarterTurns: 1,
-                                                  child: SizedBox(
-                                                    width: 220,
-                                                    height: 32,
-                                                    child: Slider(
-                                                      value: _currentPage.toDouble(),
-                                                      min: 1,
-                                                      max: _pageCount.toDouble(),
-                                                      divisions: _pageCount - 1,
-                                                      activeColor: Colors.white70,
-                                                      inactiveColor: Colors.white38,
-                                                      thumbColor: Colors.white,
-                                                      onChanged: (double value) {
-                                                        if (!mounted) return;
-                                                        setState(() {
-                                                          _currentPage =
-                                                              value.round();
-                                                        });
-                                                      },
-                                                      onChangeEnd: (double value) {
-                                                        _controller.goToPage(
-                                                            pageNumber:
-                                                                value.round());
-                                                      },
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
+  Positioned(
+    right: 4,
+    top: 0,
+    bottom: 0,
+    child: Align(
+      alignment: Alignment(
+          1.0, _badgeAlignY),
+      child: GestureDetector(
+        onVerticalDragUpdate:
+            (details) {
+          if (!mounted) return;
+          final box = _stackKey
+                  .currentContext
+                  ?.findRenderObject()
+              as RenderBox?;
+          if (box == null) return;
+          final double top = box
+              .localToGlobal(
+                  Offset.zero)
+              .dy;
+          final double height =
+              box.size.height;
+          if (height <= 0) return;
+          double fraction =
+              (details.globalPosition
+                          .dy -
+                      top) /
+                  height;
+          fraction = fraction
+              .clamp(0.0, 1.0)
+              .toDouble();
+          final int page = 1 +
+              (fraction *
+                      (_pageCount -
+                          1))
+                  .round();
+          if (page != _currentPage) {
+            setState(() {
+              _currentPage = page;
+            });
+            _controller.goToPage(
+              pageNumber: page,
+              duration:
+                  Duration.zero,
+            );
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets
+              .symmetric(
+                  horizontal: 10,
+                  vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.black54,
+            borderRadius:
+                BorderRadius.circular(
+                    14),
+          ),
+          child: Text(
+            '$_currentPage',
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight:
+                    FontWeight.w700),
+          ),
+        ),
+      ),
+    ),
+  ),
+
 if (_pageCount > 0)
   Positioned(
     left: 0,
