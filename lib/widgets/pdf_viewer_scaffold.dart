@@ -366,5 +366,16 @@ if (_pageCount > 0)
       ),
     ),
   ),
+                                ],
+                              ),
+                            ),
+
+            if (widget.bottomActionWidget != null) widget.bottomActionWidget!,
+            if (!isLandscape) const AdBannerWidget(),
+
+          ],
+        ),
+      ),
+    );
   }
 }
