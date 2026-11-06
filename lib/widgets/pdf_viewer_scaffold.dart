@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -36,6 +38,24 @@ class _PdfViewerScaffoldState extends State<PdfViewerScaffold> {
   int _pageCount = 0;
   int _currentPage = 1;
   final GlobalKey _stackKey = GlobalKey();
+  bool _showScrollPill = false;
+  Timer? _hidePillTimer;
+
+  void _onScrollActivity() {
+    if (!mounted) return;
+    _hidePillTimer?.cancel();
+    if (!_showScrollPill) {
+      setState(() {
+        _showScrollPill = true;
+      });
+    }
+    _hidePillTimer = Timer(const Duration(seconds: 1), () {
+      if (!mounted) return;
+      setState(() {
+        _showScrollPill = false;
+      });
+    });
+  }
 
 double _scrollFraction() {
   if (!_controller.isReady) return 0;
@@ -51,6 +71,7 @@ double _scrollFraction() {
 }
 
 void _onBadgeDragUpdate(DragUpdateDetails details) {
+  _onScrollActivity();
   if (!mounted) return;
   final box =
       _stackKey.currentContext?.findRenderObject() as RenderBox?;
@@ -85,6 +106,7 @@ void _onBadgeDragUpdate(DragUpdateDetails details) {
   @override
   void initState() {
     super.initState();
+    _controller.addListener(_onScrollActivity);
     _params = PdfViewerParams(
       margin: 5,
       pageDropShadow: null,
@@ -113,6 +135,8 @@ void _onBadgeDragUpdate(DragUpdateDetails details) {
 
   @override
   void dispose() {
+    _controller.removeListener(_onScrollActivity);
+    _hidePillTimer?.cancel();
     _textSearcher?.removeListener(_onSearchUpdate);
     _textSearcher?.dispose();
     _searchController.dispose();
@@ -343,45 +367,52 @@ void _onBadgeDragUpdate(DragUpdateDetails details) {
                                             )
                                                   : const Center(child: Text('Invalid PDF Source')),
                                        if (_pageCount > 1)
-  Positioned(
-    right: 4,
-    top: 0,
-    bottom: 0,
-    child: ValueListenableBuilder<Matrix4>(
-      valueListenable: _controller,
-      builder: (context, _, __) {
-        return Align(
-          alignment: Alignment(
-              1.0,
-              -1 + 2 * _scrollFraction()),
-          child: GestureDetector(
-            onVerticalDragUpdate:
-                _onBadgeDragUpdate,
-            child: Container(
-              padding: const EdgeInsets
-                  .symmetric(
-                      horizontal: 10,
-                      vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius:
-                    BorderRadius.circular(
-                        14),
-              ),
-              child: Text(
-                '$_currentPage / $_pageCount',
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight:
-                        FontWeight.w700),
-              ),
-            ),
-          ),
-        );
-      },
-    ),
-  ),
+                                         Positioned(
+                                           right: 4,
+                                           top: 0,
+                                           bottom: 0,
+                                           child: IgnorePointer(
+                                             ignoring: !_showScrollPill,
+                                             child: AnimatedOpacity(
+                                               opacity: _showScrollPill ? 1.0 : 0.0,
+                                               duration: const Duration(milliseconds: 200),
+                                               child: ValueListenableBuilder<Matrix4>(
+                                                 valueListenable: _controller,
+                                                 builder: (context, _, __) {
+                                                   return Align(
+                                                     alignment: Alignment(
+                                                         1.0,
+                                                         -1 + 2 * _scrollFraction()),
+                                                     child: GestureDetector(
+                                                       onVerticalDragUpdate:
+                                                           _onBadgeDragUpdate,
+                                                       child: Container(
+                                                         padding: const EdgeInsets
+                                                             .symmetric(
+                                                                 horizontal: 10,
+                                                                 vertical: 6),
+                                                         decoration: BoxDecoration(
+                                                           color: Colors.black54,
+                                                           borderRadius:
+                                                               BorderRadius.circular(
+                                                                   14),
+                                                         ),
+                                                         child: Text(
+                                                           '$_currentPage / $_pageCount',
+                                                           style: const TextStyle(
+                                                               color: Colors.white,
+                                                               fontSize: 14,
+                                                               fontWeight:
+                                                                   FontWeight.w700),
+                                                         ),
+                                                       ),
+                                                     ),
+                                                   );
+                                                 },
+                                               ),
+                                             ),
+                                           ),
+                                         ),
 
 
                                 ],
