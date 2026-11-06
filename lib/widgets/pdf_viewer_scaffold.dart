@@ -384,28 +384,6 @@ void _onBadgeDragUpdate(DragUpdateDetails details) {
   ),
 
 
-if (_pageCount > 0)
-  Positioned(
-    left: 0,
-    right: 0,
-    bottom: 8,
-    child: Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.black54,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          '$_currentPage / $_pageCount',
-          style: const TextStyle(
-              color: Colors.white, fontSize: 13),
-        ),
-      ),
-    ),
-  ),
-
                                 ],
                               ),
                             ),
